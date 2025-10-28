@@ -30,3 +30,4 @@ __pycache__
 
 # Private API key
 config.ini
+.env
