@@ -56,18 +56,25 @@ function Map({ mapId }) {
         glyphText: "USC"
       });
 
+      let printTest = (e) => { console.log("test"); };
+
       //add to the map
-      new AdvancedMarkerElement({
+      const uclaMarker = new AdvancedMarkerElement({
         map: mapInstance, //connect to map
         position: coords.ucla,
         content: uclaPin //connect to graphics
       });
 
-      new AdvancedMarkerElement({
+      //add an event listener
+      uclaMarker.addListener('click', printTest);
+
+      const uscMarker = new AdvancedMarkerElement({
         map: mapInstance,
         position: coords.usc,
         content: uscPin
       });
+
+      uscMarker.addListener('click', printTest);
 
     })();
   }, [mapInstance]); //list our map as a dependency that the API can read/write
@@ -76,6 +83,19 @@ function Map({ mapId }) {
     mapRef.current = map;
     setMapInstance(map);
   };
+
+  // https://stackoverflow.com/questions/7950030/can-i-remove-just-the-popup-bubbles-of-pois-in-google-maps-api-v3
+  // Here we redefine the set() method.
+  // If it is called for map option, we hide the InfoWindow, if "noSuppress"  
+  // option is not true. As Google Maps does not know about this option,  
+  // its InfoWindows will not be opened.
+  var set = google.maps.InfoWindow.prototype.set;
+
+  google.maps.InfoWindow.prototype.set = function (key, val) {
+      if (key === 'map' && ! this.get('noSuppress')) return;
+
+      set.apply(this, arguments); //disable pop-ups whenever you select a known POI
+  }
 
   return (
     <GoogleMap
