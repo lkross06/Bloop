@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
+import locationData from "./data/location.json"
 
 const privateApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 const privateMapID = import.meta.env.VITE_GOOGLE_MAPS_ID;
@@ -12,8 +13,8 @@ const privateMapID = import.meta.env.VITE_GOOGLE_MAPS_ID;
  * zoom = 15  neighborhood
  * zoom = 20  streets
  */
-const minimumZoom = 11; //how far you can zoom out (1 = world view, 18 = street views)
-const maximumZoom = 17; //how far you can zoom in
+const minimumZoom = 11.5; //how far you can zoom out (1 = world view, 18 = street views)
+const maximumZoom = 16.5; //how far you can zoom in
 const defaultZoom = 12;
 
 const containerStyle = {
@@ -21,28 +22,36 @@ const containerStyle = {
   height: "800px",
 };
 
-//we can put POIs (points of interest) here
-const coords = {
-  losAngeles: {
-    lat: 34.0549,
-    lng: -118.2426 //NOTE: west = negative (left of 0 degrees)
-  },
-  ucla: {
-    lat: 34.0699,
-    lng: -118.4438
-  },
-  usc: {
-    lat: 34.0224,
-    lng: -118.2851
+function getPinProps(ratings){
+  let average = (ratings.cleanliness + ratings.availability + ratings.amenities) / 3 //should be between 0-5
+  
+  let backgroundColor = ""; //lighter
+  let borderColor = ""; //darker
+
+  console.log(average)
+
+  if (average >= 4.5){
+    backgroundColor = "#53CF59"
+    borderColor = "#2B8F30"
+  } else if (average >= 4){
+    backgroundColor = "#9DD169"
+    borderColor = "#628C38"
+  } else if (average >= 3){
+    backgroundColor = "#CFC167"
+    borderColor = "#8F8339"
+  } else if (average >= 2){
+    backgroundColor = "#CF9B67"
+    borderColor = "#8C6238"
+  } else {
+    backgroundColor = "#CF6C67"
+    borderColor = "#8C3C38"
   }
-};
 
-function OpenPopUp(){
-
-}
-
-function Button({handleClick, text}){
-  return <button onClick={handleClick}>{text}</button>
+  return {
+      background: backgroundColor,
+      borderColor: borderColor,
+      glyphColor: borderColor, //changes middle circle OR text color
+    }
 }
 
 function Map({ mapId }) {
@@ -68,15 +77,15 @@ function Map({ mapId }) {
   //NOTE: choosing to use JS objects instead of React objects (<AdvancedMarker... />) since this is more of a
   //"back end" endeavor and easy communication with other external services isn't guranteed if we use React objects.
   //So the only React object is the map, which handles everything.
-  async function addMarker(uniqueID, map, pinProperties, markerProperties, handleClick){
+  async function addMarker(location, map, handleClick){
     const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker"); //the asynchronous part comes in here
 
     try {
       //make the graphics
-      const pin = new PinElement(pinProperties);
+      const defaultPin = new PinElement(getPinProps(location.ratings));
 
       //make the actual element
-      const marker = new AdvancedMarkerElement({...markerProperties, map: map, content: pin}); //add the graphics and map
+      const marker = new AdvancedMarkerElement({position: {lat: location.lat, lng: location.lng}, map: map, content: defaultPin}); //add the graphics and map
 
       marker.addListener("click", handleClick);
 
@@ -86,32 +95,14 @@ function Map({ mapId }) {
   }
 
   addMarker(
-    "UCLA",
-    mapInstance, 
-    {
-    background: "dodgerblue",
-    borderColor: "blue",
-    glyphColor: "blue", //changes middle circle OR text color
-    glyphText: "UCLA"
-    },
-    {
-      position: coords.ucla
-    },
+    locationData.ucla,
+    mapInstance,
     () => { console.log("test"); }
   );
 
   addMarker(
-    "USC",
+    locationData.usc,
     mapInstance, 
-    {
-    background: "red",
-    borderColor: "darkred",
-    glyphColor: "darkred",
-    glyphText: "USC"
-    },
-    {
-      position: coords.usc
-    },
     () => { console.log("test"); }
   );
 
@@ -131,7 +122,10 @@ function Map({ mapId }) {
   return (
     <GoogleMap
       mapContainerStyle={containerStyle}
-      center={coords.losAngeles}
+      center={{
+        lat: locationData.test.lat,
+        lng: locationData.test.lng
+      }}
       zoom={defaultZoom} //let's show all of LA for now
       onLoad={onLoad}
       options={{
@@ -147,7 +141,7 @@ function Map({ mapId }) {
 }
 
 export default function App() {
-  return (
+  return <>
     <LoadScriptNext //load the API
       googleMapsApiKey={privateApiKey}
       libraries={["marker"]} //load marker library
@@ -155,5 +149,5 @@ export default function App() {
     >
       <Map mapId={privateMapID} />
     </LoadScriptNext>
-  );
+  </>;
 }

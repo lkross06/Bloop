@@ -1,0 +1,32 @@
+{
+    "test":{
+        "title": "TEST",
+        "lat": 34.0549,
+        "lng": -118.2426,
+        "ratings": {
+            "cleanliness": 3.5,
+            "availability": 3,
+            "amenities": 4
+        }
+    },
+    "ucla":{
+        "title": "UCLA",
+        "lat": 34.0699,
+        "lng": -118.4438,
+        "ratings": {
+            "cleanliness": 5,
+            "availability": 5,
+            "amenities": 4
+        }
+    },
+    "usc":{
+        "title": "USC",
+        "lat": 34.0224,
+        "lng": -118.2851,
+        "ratings": {
+            "cleanliness": 1,
+            "availability": 2,
+            "amenities": 2
+        }
+    }
+}
