@@ -6,4 +6,10 @@ body {
 .location-popup {
     background-color: white;
     padding: 5%;
+    width: 200px;
+    height: 160px;
+}
+
+.location-popup-list {
+    list-style-type: none; /* don't show tick marks */
 }

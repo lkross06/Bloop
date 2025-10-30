@@ -28,8 +28,6 @@ function getPinProps(ratings){
   let backgroundColor = ""; //lighter
   let borderColor = ""; //darker
 
-  console.log(average)
-
   if (average >= 4.5){
     backgroundColor = "#53CF59"
     borderColor = "#2B8F30"
@@ -52,6 +50,27 @@ function getPinProps(ratings){
       borderColor: borderColor,
       glyphColor: borderColor, //changes middle circle OR text color
     }
+}
+
+function LocationPopUp(location) {
+  //create empty div
+  const div = document.createElement("div");
+  div.setAttribute("class", "location-popup"); //NOT "className" because this is technically HTML not JSX
+
+  //render JSX content inside div
+  ReactDOM.createRoot(div).render(
+    <>
+      <h3>{location.title}</h3>
+      <p>{location.lat}°, {location.lng}°</p>
+      <ul className="location-popup-list">
+        <li key="cleanliness">Cleanliness: {location.ratings.cleanliness}</li>
+        <li key="availability">Availability: {location.ratings.availability}</li>
+        <li key="amenities">Amenities: {location.ratings.amenities}</li>
+      </ul>
+    </>
+  );
+
+  return div;
 }
 
 function Map({ mapId }) {
@@ -86,8 +105,18 @@ function Map({ mapId }) {
 
       //make the actual element
       const marker = new AdvancedMarkerElement({position: {lat: location.lat, lng: location.lng}, map: map, content: defaultPin}); //add the graphics and map
-
-      marker.addListener("click", handleClick);
+      marker.locationData = location
+      marker.state = "pin"
+      
+      google.maps.event.addListener(marker, "click", function () {
+        if (this.state == "pin"){
+          this.content = LocationPopUp(this.locationData);
+          this.state = "popup"
+        } else {
+          this.content = new PinElement(getPinProps(this.locationData.ratings));
+          this.state = "pin"
+        }
+      });
 
     } catch (e) {
       console.error(e);
@@ -97,7 +126,10 @@ function Map({ mapId }) {
   addMarker(
     locationData.ucla,
     mapInstance,
-    () => { console.log("test"); }
+    () => { 
+      // this.content = LocationPopUp(this.locationData);
+      console.log(this);
+     }
   );
 
   addMarker(
