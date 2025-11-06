@@ -4,10 +4,10 @@ import ReactDOM from "react-dom/client";
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
 import locationData from "./data/location.json"
 
-const mapStartCoords = {lat: 34.0699, lng: -118.4438} //right now this is just ucla's coordinates
-
 const privateApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 const privateMapID = import.meta.env.VITE_GOOGLE_MAPS_ID;
+
+const mapStartCoords = {lat: 34.0699, lng: -118.4438} //right now this is just ucla's coordinates
 
 /**
  * zoom = 0   whole world
@@ -54,6 +54,10 @@ function getPinProps(ratings){
     }
 }
 
+function handleMarkerClick(marker){
+  
+}
+
 function LocationPopUp(location) {
   //create empty div
   const div = document.createElement("div");
@@ -81,6 +85,9 @@ function Map({ mapId }) {
   const mapRef = useRef(null); //references will persist across re-renders of this component
   const [mapInstance, setMapInstance] = useState(null);
 
+  //currently selected marker with a pop-up
+  let activeMarker = null;
+
   //we need React's useEffect to stay connected with external
   //systems (in this case our API)
   useEffect(() => {
@@ -98,7 +105,45 @@ function Map({ mapId }) {
   //NOTE: choosing to use JS objects instead of React objects (<AdvancedMarker... />) since this is more of a
   //"back end" endeavor and easy communication with other external services isn't guranteed if we use React objects.
   //So the only React object is the map, which handles everything.
-  async function addMarker(location, map){
+  async function addMarker(location){
+    function handleMarkerClick(marker){
+      if (marker.state == "pin"){
+        closeMarkerPopup(activeMarker);
+        openMarkerPopup(marker);
+        activeMarker = marker;
+      } else {
+        closeMarkerPopup(marker);
+        activeMarker = null;
+      }
+    }
+
+    function openMarkerPopup(marker){
+      try {
+          marker.content = LocationPopUp(marker.locationData);
+          marker.zIndex = 2;
+          marker.state = "popup"
+
+          //when a pop-up is shown, pan the map over to center on that location
+          mapInstance.panTo(marker.position);
+
+          return true
+      } catch {
+        return false
+      }
+    }
+
+    function closeMarkerPopup(marker){
+      try{
+        marker.content = new PinElement(getPinProps(marker.locationData.ratings));
+        marker.zIndex = 1;
+        marker.state = "pin";
+
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
     const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker"); //the asynchronous part comes in here
 
     try {
@@ -106,25 +151,13 @@ function Map({ mapId }) {
       const defaultPin = new PinElement(getPinProps(location.ratings));
 
       //make the actual element
-      const marker = new AdvancedMarkerElement({position: {lat: location.lat, lng: location.lng}, map: map, content: defaultPin}); //add the graphics and map
+      const marker = new AdvancedMarkerElement({position: {lat: location.lat, lng: location.lng}, map: mapInstance, content: defaultPin}); //add the graphics and map
+
       marker.zIndex = 1;
       marker.locationData = location
       marker.state = "pin"
       
-      google.maps.event.addListener(marker, "click", function () {
-        if (this.state == "pin"){
-          this.content = LocationPopUp(this.locationData);
-          this.zIndex = 2;
-          this.state = "popup"
-
-          //when a pop-up is shown, pan the map over to center on that location
-          map.panTo(this.position);
-        } else {
-          this.content = new PinElement(getPinProps(this.locationData.ratings));
-          this.zIndex = 1;
-          this.state = "pin"
-        }
-      });
+      google.maps.event.addListener(marker, "click", () => { handleMarkerClick(marker); });
 
     } catch (e) {
       console.error(e);
@@ -133,10 +166,7 @@ function Map({ mapId }) {
 
   //take the generated bathroom data and add as markers
   for (const location in locationData) {
-    addMarker(
-      locationData[location],
-      mapInstance
-    );
+    addMarker( locationData[location] );
   }
 
 
