@@ -4,6 +4,8 @@ import ReactDOM from "react-dom/client";
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
 import locationData from "./data/location.json"
 
+const mapStartCoords = {lat: 34.0699, lng: -118.4438} //right now this is just ucla's coordinates
+
 const privateApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 const privateMapID = import.meta.env.VITE_GOOGLE_MAPS_ID;
 
@@ -15,7 +17,7 @@ const privateMapID = import.meta.env.VITE_GOOGLE_MAPS_ID;
  */
 const minimumZoom = 11.5; //how far you can zoom out (1 = world view, 18 = street views)
 const maximumZoom = 16.5; //how far you can zoom in
-const defaultZoom = 12;
+const defaultZoom = 15.5;
 
 const containerStyle = {
   width: "100%",
@@ -96,7 +98,7 @@ function Map({ mapId }) {
   //NOTE: choosing to use JS objects instead of React objects (<AdvancedMarker... />) since this is more of a
   //"back end" endeavor and easy communication with other external services isn't guranteed if we use React objects.
   //So the only React object is the map, which handles everything.
-  async function addMarker(location, map, handleClick){
+  async function addMarker(location, map){
     const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker"); //the asynchronous part comes in here
 
     try {
@@ -105,15 +107,21 @@ function Map({ mapId }) {
 
       //make the actual element
       const marker = new AdvancedMarkerElement({position: {lat: location.lat, lng: location.lng}, map: map, content: defaultPin}); //add the graphics and map
+      marker.zIndex = 1;
       marker.locationData = location
       marker.state = "pin"
       
       google.maps.event.addListener(marker, "click", function () {
         if (this.state == "pin"){
           this.content = LocationPopUp(this.locationData);
+          this.zIndex = 2;
           this.state = "popup"
+
+          //when a pop-up is shown, pan the map over to center on that location
+          map.panTo(this.position);
         } else {
           this.content = new PinElement(getPinProps(this.locationData.ratings));
+          this.zIndex = 1;
           this.state = "pin"
         }
       });
@@ -123,20 +131,14 @@ function Map({ mapId }) {
     }
   }
 
-  addMarker(
-    locationData.ucla,
-    mapInstance,
-    () => { 
-      // this.content = LocationPopUp(this.locationData);
-      console.log(this);
-     }
-  );
+  //take the generated bathroom data and add as markers
+  for (const location in locationData) {
+    addMarker(
+      locationData[location],
+      mapInstance
+    );
+  }
 
-  addMarker(
-    locationData.usc,
-    mapInstance, 
-    () => { console.log("test"); }
-  );
 
   // https://stackoverflow.com/questions/7950030/can-i-remove-just-the-popup-bubbles-of-pois-in-google-maps-api-v3
   // Here we redefine the set() method.
@@ -155,8 +157,8 @@ function Map({ mapId }) {
     <GoogleMap
       mapContainerStyle={containerStyle}
       center={{
-        lat: locationData.test.lat,
-        lng: locationData.test.lng
+        lat: mapStartCoords.lat,
+        lng: mapStartCoords.lng
       }}
       zoom={defaultZoom} //let's show all of LA for now
       onLoad={onLoad}

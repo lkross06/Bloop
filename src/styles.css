@@ -8,6 +8,7 @@ body {
     padding: 5%;
     width: 200px;
     height: 160px;
+    user-select: none;
 }
 
 .location-popup-list {
