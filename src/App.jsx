@@ -78,6 +78,11 @@ function getPinProps(locationPosts){
     }
 }
 
+/**
+ * Generate the HTML DOM for a location pop-up
+ * @param {JSON} location Location to render a pop-up for
+ * @returns HTMLDivElement that can be rendered straight onto the Google Maps
+ */
 function LocationPopUp(location) {
   //create empty div
   const div = document.createElement("div");
@@ -98,6 +103,11 @@ function LocationPopUp(location) {
   return div;
 }
 
+/**
+ * React Map component for rendering Google Maps interactable map, along with all things rendered in it 
+ * @param {JSON} props Takes { mapID }, private map ID
+ * @returns React component rendering interactable map and all interactble elements in it
+ */
 function Map({ mapId }) {
   //the map takes a second to load from the API to we keep references to it
   //instead of just creating a new object for it
@@ -124,7 +134,20 @@ function Map({ mapId }) {
   //NOTE: choosing to use JS objects instead of React objects (<AdvancedMarker... />) since this is more of a
   //"back end" endeavor and easy communication with other external services isn't guranteed if we use React objects.
   //So the only React object is the map, which handles everything.
+
+  /**
+   * Asynchronously load JS object (Marker) to render on Google Maps Map React component.
+   * 
+   * NOTE: choosing to use JS objects instead of React objects (<AdvancedMarker... />) since this is more of a
+   *   back-end endeavor and easy communication with other external services isn't guranteed if we use React objects.
+   *   So the only React object is the map, which handles everything.
+   * @param {JSON} location JSON containing Location data
+   */
   async function addMarker(location){
+    /**
+     * Handle mouse click event on a marker
+     * @param {AdvancedMarkerElement} marker JS object rendered on Google Maps map
+     */
     function handleMarkerClick(marker){
       if (marker.state == "pin"){
         closeMarkerPopup(activeMarker);
@@ -136,6 +159,11 @@ function Map({ mapId }) {
       }
     }
 
+    /**
+     * Open the location pop-up for a marker representing a location
+     * @param {AdvancedMarkerElement} marker JS object rendered on Google Maps map
+     * @returns true if successful, false otherwise
+     */
     function openMarkerPopup(marker){
       try {
           marker.content = LocationPopUp(marker.locationData);
@@ -151,6 +179,11 @@ function Map({ mapId }) {
       }
     }
 
+    /**
+     * Closes the currently-open location pop-up for a marker representing a location
+     * @param {AdvancedMarkerElement} marker JS object rendered on Google Maps map
+     * @returns true if successful, false otherwise
+     */
     function closeMarkerPopup(marker){
       try{
         marker.content = new PinElement(getPinProps(marker.postData));
@@ -201,12 +234,11 @@ function Map({ mapId }) {
     addMarker(location);
   }
 
-
   // https://stackoverflow.com/questions/7950030/can-i-remove-just-the-popup-bubbles-of-pois-in-google-maps-api-v3
   // Here we redefine the set() method.
-  // If it is called for map option, we hide the InfoWindow, if "noSuppress"  
-  // option is not true. As Google Maps does not know about this option,  
-  // its InfoWindows will not be opened.
+  //   If it is called for map option, we hide the InfoWindow, if "noSuppress"  
+  //   option is not true. As Google Maps does not know about this option,  
+  //   its InfoWindows will not be opened.
   var set = google.maps.InfoWindow.prototype.set;
 
   google.maps.InfoWindow.prototype.set = function (key, val) {
@@ -236,6 +268,10 @@ function Map({ mapId }) {
   );
 }
 
+/**
+ * React App component for containing all React components in our application
+ * @returns React component main container
+ */
 export default function App() {
   return <>
     <LoadScriptNext //load the API
