@@ -6,9 +6,12 @@ body {
 .location-popup {
     background-color: white;
     padding: 5%;
-    width: 200px;
-    height: 160px;
+    width: 450px;
+    height: 200px;
     user-select: none;
+    font-size: 18px;
+    box-shadow: 0 0 10px 5px #AAAAAA;
+    border-radius: 5px;
 }
 
 .location-popup-list {

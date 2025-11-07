@@ -1,8 +1,9 @@
-import React, { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
+import { sha256 } from 'js-sha256';
 
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
-import locationData from "./data/location.json"
+import * as DB from "./DBHandler"
 
 const privateApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 const privateMapID = import.meta.env.VITE_GOOGLE_MAPS_ID;
@@ -24,11 +25,35 @@ const containerStyle = {
   height: "800px",
 };
 
-function getPinProps(ratings){
-  let average = (ratings.cleanliness + ratings.availability + ratings.amenities) / 3 //should be between 0-5
+/**
+ * Styles a pin's based on the average rating for a singular location
+ * @param {Number[]} locationPosts List of numbers corresponding to postIDs for that location
+ * @returns PinElement properties
+ */
+function getPinProps(locationPosts){
+  let sum = 0;
+  let total = 0;
+
+  //ping the database for post information given a postID
+  for (const locationPost of locationPosts){
+    const retrievedPostData = DB.getPost(String(locationPost));
+
+    //if the post actually exists
+    if (retrievedPostData != null){
+      sum += retrievedPostData.cleanliness + retrievedPostData.availability + retrievedPostData.amenities;
+      total += 1;
+    }
+  }
+
+  let average = 0;
+  if (total == 0){
+    average = -1; //if we didn't find any posts, default to a gray pin
+  } else {
+    average = sum / total; //otherwise, get an average that we can assign a red-yellow-green color to!
+  }  
   
-  let backgroundColor = ""; //lighter
-  let borderColor = ""; //darker
+  let backgroundColor = "#AAAAAA"; //lighter
+  let borderColor = "#666666"; //darker
 
   if (average >= 4.5){
     backgroundColor = "#53CF59"
@@ -42,7 +67,7 @@ function getPinProps(ratings){
   } else if (average >= 2){
     backgroundColor = "#CF9B67"
     borderColor = "#8C6238"
-  } else {
+  } else if (average >= 0){
     backgroundColor = "#CF6C67"
     borderColor = "#8C3C38"
   }
@@ -54,10 +79,6 @@ function getPinProps(ratings){
     }
 }
 
-function handleMarkerClick(marker){
-  
-}
-
 function LocationPopUp(location) {
   //create empty div
   const div = document.createElement("div");
@@ -67,11 +88,10 @@ function LocationPopUp(location) {
   ReactDOM.createRoot(div).render(
     <>
       <h3>{location.title}</h3>
-      <p>{location.lat}°, {location.lng}°</p>
       <ul className="location-popup-list">
-        <li key="cleanliness">Cleanliness: {location.ratings.cleanliness}</li>
+        {/* <li key="cleanliness">Cleanliness: {location.posts[0].cleanliness}</li>
         <li key="availability">Availability: {location.ratings.availability}</li>
-        <li key="amenities">Amenities: {location.ratings.amenities}</li>
+        <li key="amenities">Amenities: {location.ratings.amenities}</li> */}
       </ul>
     </>
   );
@@ -134,7 +154,7 @@ function Map({ mapId }) {
 
     function closeMarkerPopup(marker){
       try{
-        marker.content = new PinElement(getPinProps(marker.locationData.ratings));
+        marker.content = new PinElement(getPinProps(marker.locationData.posts));
         marker.zIndex = 1;
         marker.state = "pin";
 
@@ -148,7 +168,7 @@ function Map({ mapId }) {
 
     try {
       //make the graphics
-      const defaultPin = new PinElement(getPinProps(location.ratings));
+      const defaultPin = new PinElement(getPinProps(location.posts));
 
       //make the actual element
       const marker = new AdvancedMarkerElement({position: {lat: location.lat, lng: location.lng}, map: mapInstance, content: defaultPin}); //add the graphics and map
@@ -165,8 +185,8 @@ function Map({ mapId }) {
   }
 
   //take the generated bathroom data and add as markers
-  for (const location in locationData) {
-    addMarker( locationData[location] );
+  for (const location of DB.getLocationsAll()) {
+    addMarker(location);
   }
 
 

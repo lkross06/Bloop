@@ -1,122 +1,17 @@
 {
-  "DoddHall_Basement": {
-    "title": "Dodd Hall – Basement",
-    "lat": 34.0716,
-    "lng": -118.4420,
-    "ratings": { "cleanliness": 1.9, "availability": 2.1, "amenities": 2.0 }
-  },
-  "BoelterHall_4thFloor": {
-    "title": "Boelter Hall – 4th Floor",
-    "lat": 34.0709,
-    "lng": -118.4422,
-    "ratings": { "cleanliness": 1.2, "availability": 1.5, "amenities": 1.3 }
-  },
-  "KaplanHall_3rdFloor": {
-    "title": "Kaplan Hall – 3rd Floor",
-    "lat": 34.0730,
-    "lng": -118.4415,
-    "ratings": { "cleanliness": 0.8, "availability": 1.0, "amenities": 0.9 }
-  },
-  "PauleyPavilion_LowerConcourse": {
-    "title": "Pauley Pavilion – Lower Concourse Restrooms",
-    "lat": 34.0666,
-    "lng": -118.4444,
-    "ratings": { "cleanliness": 2.3, "availability": 2.1, "amenities": 2.5 }
-  },
-  "EngineeringIV_1stFloor": {
-    "title": "Engineering IV – 1st Floor Restroom",
-    "lat": 34.0680,
-    "lng": -118.4410,
-    "ratings": { "cleanliness": 2.0, "availability": 1.7, "amenities": 2.1 }
-  },
-  "ParkingStructure2_3rdLevel": {
-    "title": "Parking Structure 2 – 3rd Level Restroom",
-    "lat": 34.0704,
-    "lng": -118.4460,
-    "ratings": { "cleanliness": 1.5, "availability": 1.9, "amenities": 2.0 }
-  },
-  "HainesHall_Basement": {
-    "title": "Haines Hall – Basement Restroom",
-    "lat": 34.0727,
-    "lng": -118.4402,
-    "ratings": { "cleanliness": 2.3, "availability": 2.4, "amenities": 2.2 }
-  },
-  "PowellLibrary_MainFloor": {
-    "title": "Powell Library – Main Floor Restroom",
-    "lat": 34.0714,
-    "lng": -118.4432,
-    "ratings": { "cleanliness": 2.8, "availability": 3.0, "amenities": 3.2 }
-  },
-  "AckermanUnion_FoodCourt": {
-    "title": "Ackerman Union – Food Court Restroom",
-    "lat": 34.0708,
-    "lng": -118.4446,
-    "ratings": { "cleanliness": 3.4, "availability": 3.1, "amenities": 2.9 }
-  },
-  "MooreHall_1stFloor": {
-    "title": "Moore Hall – 1st Floor Restroom",
-    "lat": 34.0678,
-    "lng": -118.4441,
-    "ratings": { "cleanliness": 3.0, "availability": 2.7, "amenities": 3.3 }
-  },
-  "YoungLibrary_LobbyRestroom": {
-    "title": "Young Library – Lobby Restroom",
-    "lat": 34.0692,
-    "lng": -118.4427,
-    "ratings": { "cleanliness": 3.8, "availability": 3.6, "amenities": 3.4 }
-  },
-  "KerckhoffHall_Basement": {
-    "title": "Kerckhoff Hall – Basement Restroom",
-    "lat": 34.0711,
-    "lng": -118.4449,
-    "ratings": { "cleanliness": 3.3, "availability": 3.7, "amenities": 3.5 }
-  },
-  "JanssSteps_MidwayRestroom": {
-    "title": "Janss Steps – Midway Landing Restroom",
-    "lat": 34.0725,
-    "lng": -118.4436,
-    "ratings": { "cleanliness": 2.9, "availability": 3.2, "amenities": 3.1 }
-  },
-  "StrathmoreDrive_AptCommonsRestroom": {
-    "title": "Strathmore Drive Apartments – Commons Restroom",
-    "lat": 34.0740,
-    "lng": -118.4520,
-    "ratings": { "cleanliness": 3.5, "availability": 3.8, "amenities": 3.6 }
-  },
-  "MedicalPlaza_RetailLevelRestroom": {
-    "title": "Medical Plaza – Retail Level Restroom",
-    "lat": 34.0691,
-    "lng": -118.4448,
-    "ratings": { "cleanliness": 3.9, "availability": 3.5, "amenities": 3.8 }
-  },
-  "HilgardAve_BusStopRestroom": {
-    "title": "Hilgard Avenue Bus Stop Restroom",
-    "lat": 34.0707,
-    "lng": -118.4395,
-    "ratings": { "cleanliness": 3.0, "availability": 3.2, "amenities": 3.1 }
-  },
-  "JohnWoodenCenter_LockerRoomRestroom": {
-    "title": "John Wooden Center – Locker Room Restroom",
-    "lat": 34.0701,
-    "lng": -118.4447,
-    "ratings": { "cleanliness": 4.3, "availability": 4.6, "amenities": 4.5 }
-  },
-  "CarnesaleCommons_Floor1": {
-    "title": "Carnesale Commons – Floor 1 Restroom",
-    "lat": 34.0691,
-    "lng": -118.4444,
-    "ratings": { "cleanliness": 4.5, "availability": 4.2, "amenities": 4.3 }
-  },
-  "ClarkLibrary_2ndFloorRestroom": {
-    "title": "Clark Library – 2nd Floor Restroom",
-    "lat": 34.0710,
-    "lng": -118.4416,
-    "ratings": { "cleanliness": 4.6, "availability": 4.9, "amenities": 4.7 }
-  },
-  "WestholmeAve_StudentHousingRestroom": {
-    "title": "Westholme Avenue Student Housing – Restroom",
-    "lat": 34.0730,
-    "lng": -118.4431,
-    "ratings": { "cleanliness": 4.1, "availability": 4.0, "amenities": 4.3 }
-  }
+  "1": {"locationID":1,"title":"Dodd Hall","lat":34.0716,"lng":-118.4420,"posts":[31,32],"gender":"N"},
+  "2": {"locationID":2,"title":"Boelter Hall","lat":34.0709,"lng":-118.4422,"posts":[33],"gender":"M"},
+  "3": {"locationID":3,"title":"Kaplan Hall","lat":34.0730,"lng":-118.4415,"posts":[34,35],"gender":"F"},
+  "4": {"locationID":4,"title":"Pauley Pavilion","lat":34.0666,"lng":-118.4444,"posts":[],"gender":"N"},
+  "5": {"locationID":5,"title":"Engineering IV","lat":34.0680,"lng":-118.4410,"posts":[],"gender":"F"},
+  "6": {"locationID":6,"title":"Parking Structure 2","lat":34.0704,"lng":-118.4460,"posts":[],"gender":"N"},
+  "7": {"locationID":7,"title":"Haines Hall","lat":34.0727,"lng":-118.4402,"posts":[],"gender":"M"},
+  "8": {"locationID":8,"title":"Powell Library","lat":34.0714,"lng":-118.4432,"posts":[],"gender":"N"},
+  "9": {"locationID":9,"title":"Ackerman Union","lat":34.0708,"lng":-118.4446,"posts":[],"gender":"F"},
+  "10": {"locationID":10,"title":"Moore Hall","lat":34.0678,"lng":-118.4441,"posts":[],"gender":"N"},
+  "11": {"locationID":11,"title":"Young Library","lat":34.0692,"lng":-118.4427,"posts":[],"gender":"M"},
+  "12": {"locationID":12,"title":"Kerckhoff Hall","lat":34.0711,"lng":-118.4449,"posts":[],"gender":"N"},
+  "13": {"locationID":13,"title":"Janss Steps","lat":34.0725,"lng":-118.4436,"posts":[],"gender":"F"},
+  "14": {"locationID":14,"title":"Strathmore Drive Apartments","lat":34.0740,"lng":-118.4520,"posts":[],"gender":"N"},
+  "15": {"locationID":15,"title":"Medical Plaza","lat":34.0691,"lng":-118.4448,"posts":[],"gender":"N"}
 }
