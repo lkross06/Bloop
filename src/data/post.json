@@ -1,7 +1,7 @@
 {
-  "31": {"postID":31,"locationID":1,"accountID":41,"cleanliness":4,"availability":3,"amenities":5,"notes":"Pretty clean and well-stocked!"},
-  "32": {"postID":32,"locationID":1,"accountID":42,"cleanliness":2,"availability":1,"amenities":2,"notes":"Crowded, needs maintenance."},
-  "33": {"postID":33,"locationID":2,"accountID":43,"cleanliness":5,"availability":5,"amenities":4,"notes":"Excellent facilities!"},
+  "31": {"postID":31,"locationID":1,"accountID":41,"cleanliness":0,"availability":1,"amenities":2,"notes":"Pretty clean and well-stocked!"},
+  "32": {"postID":32,"locationID":1,"accountID":42,"cleanliness":2,"availability":1,"amenities":3,"notes":"Crowded, needs maintenance."},
+  "33": {"postID":33,"locationID":2,"accountID":43,"cleanliness":3,"availability":3,"amenities":4,"notes":"Excellent facilities!"},
   "34": {"postID":34,"locationID":3,"accountID":41,"cleanliness":3,"availability":3,"amenities":3,"notes":"Average, nothing special."},
   "35": {"postID":35,"locationID":3,"accountID":42,"cleanliness":1,"availability":2,"amenities":0,"notes":"Very dirty and poorly stocked."}
 }

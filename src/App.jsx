@@ -27,33 +27,32 @@ const containerStyle = {
 
 /**
  * Styles a pin's based on the average rating for a singular location
- * @param {Number[]} locationPosts List of numbers corresponding to postIDs for that location
+ * @param {JSON[]} locationPosts List of JSONS corresponding to posts about this location
  * @returns PinElement properties
  */
 function getPinProps(locationPosts){
+
+  if (locationPosts == null || locationPosts.length < 1){
+    return {
+      background: "#AAAAAA",
+      borderColor: "#666666",
+      glyphColor: "#666666", //changes middle circle OR text color
+    }
+  }
+
   let sum = 0;
   let total = 0;
 
   //ping the database for post information given a postID
   for (const locationPost of locationPosts){
-    const retrievedPostData = DB.getPost(String(locationPost));
-
-    //if the post actually exists
-    if (retrievedPostData != null){
-      sum += retrievedPostData.cleanliness + retrievedPostData.availability + retrievedPostData.amenities;
-      total += 1;
-    }
+    sum += locationPost.cleanliness + locationPost.availability + locationPost.amenities;
+    total += 3;
   }
 
-  let average = 0;
-  if (total == 0){
-    average = -1; //if we didn't find any posts, default to a gray pin
-  } else {
-    average = sum / total; //otherwise, get an average that we can assign a red-yellow-green color to!
-  }  
+  let average = sum / total; //otherwise, get an average that we can assign a red-yellow-green color to! 
   
-  let backgroundColor = "#AAAAAA"; //lighter
-  let borderColor = "#666666"; //darker
+  let backgroundColor = ""; //lighter
+  let borderColor = ""; //darker
 
   if (average >= 4.5){
     backgroundColor = "#53CF59"
@@ -154,7 +153,7 @@ function Map({ mapId }) {
 
     function closeMarkerPopup(marker){
       try{
-        marker.content = new PinElement(getPinProps(marker.locationData.posts));
+        marker.content = new PinElement(getPinProps(marker.postData));
         marker.zIndex = 1;
         marker.state = "pin";
 
@@ -167,15 +166,28 @@ function Map({ mapId }) {
     const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker"); //the asynchronous part comes in here
 
     try {
+
+      //first try to load all of the posts related to this location
+      //if we store this information with the React component we get around having to keep polling the DBMS
+      let posts = []
+
+      //access all of the posts related to this location
+      for (const locationPost of location.posts){
+        const retrievedPostData = DB.getPost(String(locationPost));
+        //if the post actually exists
+        if (retrievedPostData != null) posts.push(retrievedPostData);
+      }
+
       //make the graphics
-      const defaultPin = new PinElement(getPinProps(location.posts));
+      const defaultPin = new PinElement(getPinProps(posts));
 
       //make the actual element
       const marker = new AdvancedMarkerElement({position: {lat: location.lat, lng: location.lng}, map: mapInstance, content: defaultPin}); //add the graphics and map
 
       marker.zIndex = 1;
-      marker.locationData = location
-      marker.state = "pin"
+      marker.locationData = location;
+      marker.postData = posts;
+      marker.state = "pin";
       
       google.maps.event.addListener(marker, "click", () => { handleMarkerClick(marker); });
 
