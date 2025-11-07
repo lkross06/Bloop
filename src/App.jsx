@@ -150,8 +150,6 @@ function LocationPopUp(location, posts) {
   //render JSX content inside div
   ReactDOM.createRoot(div).render(
     <>
-      
-
       <span className="location-popup-header">
         <h3>{location.title}</h3>
         <h4 className="location-popup-subheader">{location.lat}° N, {-1 * location.lng}° W | <GenderSymbol gender={location.gender} /></h4>
@@ -176,6 +174,8 @@ function LocationPopUp(location, posts) {
         {/* notice that we divide total by 3 because each batch of cleanliness/availability/amenities constitutes 1 post */}
         <p>{total / 3} {(total / 3 == 1)? "review" : "reviews"}</p>
       </span>
+
+      <button className="location-popup-button">Create Post</button>
     </>
   );
 
@@ -251,7 +251,8 @@ function Map({ mapId }) {
           marker.state = "popup"
 
           //when a pop-up is shown, pan the map over to center on that location
-          mapInstance.panTo(marker.position);
+          //and offset by 0.002° N so that the large location pop-up is centered
+          mapInstance.panTo({lat: marker.position.lat + 0.002, lng: marker.position.lng});
 
           return true
       } catch {

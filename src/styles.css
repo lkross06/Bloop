@@ -17,7 +17,7 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   border-radius: 12px;
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto 1fr auto;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem 1.25rem;
 }
@@ -98,6 +98,26 @@ body {
     font-size: 3rem;
 }
 
+/* create post button */
+.location-popup-button {
+  grid-column: 1 / 3;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  background-color: dodgerblue;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.location-popup-button:hover {
+  background-color: #1a73e8;
+}
+
+/* other React components */
+
 .full-stars {
   color: goldenrod;
 }
@@ -115,5 +135,5 @@ body {
 }
 
 .non-binary {
-    color: #aaa;
+    color: #888;
 }
