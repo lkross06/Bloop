@@ -3,6 +3,12 @@ import locations from "./data/location.json";
 import posts from "./data/post.json";
 import accounts from "./data/account.json";
 
+import { sha256 } from 'js-sha256';
+
+function generateUniqueID(){
+  return sha256(String(Date.now())); //creates a 256-bit hash using the current time in ms. so this is a one-time, deterministic UID
+}
+
 /** ------- LOCATION DATA ------ */
 
 /**
@@ -31,6 +37,38 @@ export function getLocation(locationID) {
  */
 export function getPost(postID) {
   return posts[String(postID)] || null;
+}
+
+export function createPost(locationID, accountID, cleanliness, availability, amenities, notes){
+  try {
+    //generate a new unique ID
+    const id = generateUniqueID();
+
+    let newPost = {
+      postID: id,
+      locationID: locationID,
+      accountID: accountID,
+      cleanliness: cleanliness,
+      availability: availability,
+      amenities: amenities,
+      notes: notes
+    };
+  
+    //try to make sure the account/location exist first, so that the try/catch will catch bad values
+    let a = accounts[accountID];
+    let l = locations[locationID];
+    if (a == null || l == null) throw new Error;
+
+    //all values are valid! now we can actually write values
+    a.posts.push(id);
+    l.posts.push(id);
+
+    posts[id] = newPost;
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** ------- ACCOUNT DATA ------ */

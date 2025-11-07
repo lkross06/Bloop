@@ -8,6 +8,8 @@ body {
   padding: 0;
 }
 
+/* ------ LOGIN BANNER ------- */
+
 .login-banner {
   width: 100%;
   padding: 0.75rem 1rem;
@@ -36,7 +38,7 @@ body {
   text-decoration: underline;
 }
 
-/* location marker pop-up */
+/* ------- LOCATION MARKER POP-UP ------- */
 
 .location-popup {
   background-color: white;
@@ -129,7 +131,7 @@ body {
 }
 
 /* create post button */
-.location-popup-button {
+.location-popup-button, .post-create-form-submit {
   grid-column: 1 / 3;
   padding: 0.75rem 1rem;
   font-size: 1rem;
@@ -142,8 +144,8 @@ body {
   transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-.location-popup-button:hover {
-  background-color: #1a73e8;
+.location-popup-button:hover, .post-create-form-submit:hover {
+  background-color: #1A73E8;
 }
 
 .location-popup-button:disabled {
@@ -172,3 +174,87 @@ body {
 .non-binary {
     color: #888;
 }
+
+/* ------- CREATE POST FORM ------- */
+
+.post-create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  max-width: 500px;
+  margin: 0 auto;
+  font-family: system-ui, sans-serif;
+}
+
+.post-create-form-title {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.post-create-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.post-create-form-label {
+  font-weight: 500;
+  color: #333;
+}
+
+.post-create-form-slider {
+  width: 100%;
+}
+
+.slider-value {
+  text-align: right;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.post-create-form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+/* For changing color of slider bar based on score */
+.score-0 {
+   accent-color: #b68282; /* tweaked slightly lighter so that the background of the slider is consistent. was unable to resolve browser css changes */
+}
+
+.score-1 {
+   accent-color: #d56c58;
+}
+
+.score-2 {
+   accent-color: #CF9B67;
+}
+
+.score-3 {
+   accent-color: #CFC167;
+}
+
+.score-4 {
+   accent-color: #9DD169;
+}
+
+.score-5 {
+   accent-color: #53CF59;
+}
+
+.required-asterisk {
+  color: red;
+  font-weight: 500;
+}
+

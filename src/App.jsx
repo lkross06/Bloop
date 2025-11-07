@@ -1,8 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 
-import { sha256 } from 'js-sha256';
-
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
 import * as DB from "./DBHandler"
 
@@ -66,9 +64,12 @@ function getPinProps(locationPosts){
   } else if (average >= 2){
     backgroundColor = "#CF9B67"
     borderColor = "#8C6238"
-  } else if (average >= 0){
+  } else if (average > 0){
     backgroundColor = "#CF6C67"
     borderColor = "#8C3C38"
+  } else if (average == 0){
+    backgroundColor = "#9D150E"
+    borderColor = "#6B0E09"
   }
 
   return {
@@ -228,7 +229,6 @@ function Map({ mapId }) {
      * @param {AdvancedMarkerElement} marker JS object rendered on Google Maps map
      */
     function handleMarkerClick(marker){
-      // console.log(sha256(String(Date.now())));
       if (marker.state == "pin"){
         closeMarkerPopup(activeMarker);
         openMarkerPopup(marker);
@@ -349,13 +349,103 @@ function Map({ mapId }) {
   );
 }
 
+/**
+ * React component for showing a banner at the top of the site telling user to log in with log in button
+ * @returns React component banner
+ */
 function LoginBanner(){
   function handleLoginButton(){
+    console.log("log in");
   }
 
   return <div className="login-banner">
-    <p>Currently this page is read-only. <span className="login-button" onClick={handleLoginButton}>LOGIN</span> to create posts.</p>
+    <p>Currently this page is read-only. <span className="login-button" onClick={handleLoginButton}>Login</span> to create posts.</p>
   </div>
+}
+
+/**
+ * React component form for creating a new Post
+ * @returns React component
+ */
+function PostCreateForm(){
+  //in theory, when this form appears the locationID is known (because that button triggers this modal)
+  //  as well as the accountID (session storage..?)
+  const defaultRating = 3;
+  const maxNotesLength = 150;
+
+  const [cleanliness, setCleanliness] = useState(defaultRating);
+  const [availability, setAvailability] = useState(defaultRating);
+  const [amenities, setAmenities] = useState(defaultRating);
+  const [notes, setNotes] = useState("");
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    DB.createPost(1, 41, cleanliness, availability, amenities, notes); //TODO: currently we're just choosing a random account/location to post from/about
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="post-create-form">
+      <div className="post-create-form-group">
+        <label htmlFor="cleanliness" className="post-create-form-label">Cleanliness <span className="required-asterisk">*</span></label>
+        <input
+          type="range"
+          id="cleanliness"
+          className={"form-slider score-" + Math.round(cleanliness)}
+          min="0"
+          max="5"
+          value={cleanliness}
+          onChange={(e) => setCleanliness(e.target.value)}
+          required
+        />
+        <span className="slider-value">{Math.round(cleanliness)}</span>
+      </div>
+
+      <div className="post-create-form-group">
+        <label htmlFor="availability" className="post-create-form-label">Availability <span className="required-asterisk">*</span></label>
+        <input
+          type="range"
+          id="availability"
+          className={"form-slider score-" + Math.round(availability)}
+          min="0"
+          max="5"
+          value={availability}
+          onChange={(e) => setAvailability(e.target.value)}
+          required
+        />
+        <span className="slider-value">{Math.round(availability)}</span>
+      </div>
+
+      <div className="post-create-form-group">
+        <label htmlFor="amenities" className="post-create-form-label">Amenities <span className="required-asterisk">*</span></label>
+        <input
+          type="range"
+          id="amenities"
+          className={"form-slider score-" + Math.round(amenities)}
+          min="0"
+          max="5"
+          value={amenities}
+          onChange={(e) => setAmenities(e.target.value)}
+          required
+        />
+        <span className="slider-value">{Math.round(amenities)}</span>
+      </div>
+
+      <div className="post-create-form-group">
+        <label htmlFor="notes" className="post-create-form-label">Notes</label>
+        <textarea
+          id="notes"
+          className="post-create-form-textarea"
+          maxLength={maxNotesLength}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Flush your thoughts"
+        />
+        <span className="slider-value">{notes.length} / {maxNotesLength}</span>
+      </div>
+
+      <button type="submit" className="post-create-form-submit">Create Post</button>
+    </form>
+  );
 }
 
 /**
@@ -372,5 +462,6 @@ export default function App() {
     >
       <Map mapId={privateMapID} />
     </LoadScriptNext>
+    <PostCreateForm />
   </>;
 }
