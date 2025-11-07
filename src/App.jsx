@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
+
 import { sha256 } from 'js-sha256';
 
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
@@ -149,6 +150,7 @@ function Map({ mapId }) {
      * @param {AdvancedMarkerElement} marker JS object rendered on Google Maps map
      */
     function handleMarkerClick(marker){
+      console.log(sha256(String(Date.now())));
       if (marker.state == "pin"){
         closeMarkerPopup(activeMarker);
         openMarkerPopup(marker);
