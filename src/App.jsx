@@ -44,7 +44,6 @@ function getPinProps(locationPosts){
   let sum = 0;
   let total = 0;
 
-  //ping the database for post information given a postID
   for (const locationPost of locationPosts){
     sum += locationPost.cleanliness + locationPost.availability + locationPost.amenities;
     total += 3;
@@ -80,11 +79,70 @@ function getPinProps(locationPosts){
 }
 
 /**
+ * Generates a React Component with 0-5 yellow stars and n-(0-5) gray stars, rounded down from the rating
+ * @param {JSON} props contains {rating}, average rating of Post or Location
+ * @returns static star rating HTML object
+ */
+function StarRating( {rating} ){
+  const star = "★";
+
+  let nFull = Math.round(rating);
+  let nEmpty = 5 - nFull;
+
+  return <>
+    {/* Use CSS classes to color the different stars */}
+    <span className="full-stars">{star.repeat(nFull)}</span>
+    <span className="empty-stars">{star.repeat(nEmpty)}</span>
+  </>
+}
+
+/**
+ * Generates a React Component with the colored symbol for gender
+ * @param {JSON} props contains {gender}, either "M"/"F"/"N" for male/female/non-binary
+ * @returns static gender HTML object
+ */
+function GenderSymbol( {gender} ){
+  const male = "♂";
+  const female = "♀";
+  // const all = "⚧";
+  // const male = "male";
+  // const female = "female";
+  const all = "inclusive"
+
+  if (gender == "m" || gender == "M") return <span className="male">{male}</span>
+
+  if (gender == "f" || gender == "F") return <span className="female">{female}</span>
+
+  return <span className="non-binary">{all}</span>
+}
+
+/**
  * Generate the HTML DOM for a location pop-up
  * @param {JSON} location Location to render a pop-up for
+ * @param {JSON[]} posts list of Posts about this Location
  * @returns HTMLDivElement that can be rendered straight onto the Google Maps
  */
-function LocationPopUp(location) {
+function LocationPopUp(location, posts) {
+
+  let sum = 0;
+  let total = 0;
+
+  //count the number of posts with a rating 0, rating 1, etc. we will round DOWN for our purposes
+  //the ith value is the number of posts with a rating i, where 0 <= i <= 5
+  let postRatings = [0, 0, 0, 0, 0, 0];
+
+  for (const post of posts){
+    let postSum = post.cleanliness + post.availability + post.amenities; //sum all ratings in one post
+    
+    postRatings[Math.round(postSum / 3)] += 1; //get the post average rating
+
+    sum += postSum;
+    total += 3;
+  }
+
+  let locationRating = 0;
+  if (total != 0) locationRating = (sum / total).toFixed(1); //get the rating by taking average, round to 1 decimal pt for formatting
+
   //create empty div
   const div = document.createElement("div");
   div.setAttribute("class", "location-popup"); //NOT "className" because this is technically HTML not JSX
@@ -92,12 +150,32 @@ function LocationPopUp(location) {
   //render JSX content inside div
   ReactDOM.createRoot(div).render(
     <>
-      <h3>{location.title}</h3>
-      <ul className="location-popup-list">
-        {/* <li key="cleanliness">Cleanliness: {location.posts[0].cleanliness}</li>
-        <li key="availability">Availability: {location.ratings.availability}</li>
-        <li key="amenities">Amenities: {location.ratings.amenities}</li> */}
-      </ul>
+      
+
+      <span className="location-popup-header">
+        <h3>{location.title}</h3>
+        <h4 className="location-popup-subheader">{location.lat}° N, {-1 * location.lng}° W | <GenderSymbol gender={location.gender} /></h4>
+      </span>
+
+      <span className="location-popup-reviews">
+        <p>Reviews</p>
+        <ul className="location-popup-list">
+          {
+            //map each rating (0-5) to the number of posts with that rating
+            postRatings.map((numPosts, rating) => (
+              <li key={rating}><StarRating rating={rating} /><span className="location-popup-reviews-num-posts">{numPosts}</span></li>
+            ))
+          }
+        </ul>
+      </span>
+
+      <span className="location-popup-attributes">
+        <h4>{(total != 0)? locationRating : "--"}</h4>
+        <h4><StarRating rating={locationRating} /></h4>
+
+        {/* notice that we divide total by 3 because each batch of cleanliness/availability/amenities constitutes 1 post */}
+        <p>{total / 3} {(total / 3 == 1)? "review" : "reviews"}</p>
+      </span>
     </>
   );
 
@@ -150,7 +228,7 @@ function Map({ mapId }) {
      * @param {AdvancedMarkerElement} marker JS object rendered on Google Maps map
      */
     function handleMarkerClick(marker){
-      console.log(sha256(String(Date.now())));
+      // console.log(sha256(String(Date.now())));
       if (marker.state == "pin"){
         closeMarkerPopup(activeMarker);
         openMarkerPopup(marker);
@@ -168,7 +246,7 @@ function Map({ mapId }) {
      */
     function openMarkerPopup(marker){
       try {
-          marker.content = LocationPopUp(marker.locationData);
+          marker.content = LocationPopUp(marker.locationData, marker.postData);
           marker.zIndex = 2;
           marker.state = "popup"
 

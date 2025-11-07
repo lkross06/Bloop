@@ -1,19 +1,119 @@
+html {
+    font-family: system-ui, sans-serif;
+    font-size: 18px;
+}
+
 body {
     margin: 0;
     padding: 0;
 }
 
 .location-popup {
-    background-color: white;
-    padding: 5%;
-    width: 450px;
-    height: 200px;
-    user-select: none;
-    font-size: 18px;
-    box-shadow: 0 0 10px 5px #AAAAAA;
-    border-radius: 5px;
+  background-color: white;
+  padding: 1.5rem;
+  width: 350px;
+  user-select: none;
+  font-size: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1.25rem;
+}
+
+.location-popup p {
+  margin: 0 0 0.5rem 0;
+  font-weight: 500;
+  color: #555;
+}
+
+/* header */
+.location-popup-header {
+  grid-column: 1 / 3;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
+  color: #222;
+  padding-bottom: 0.25rem;
+}
+
+.location-popup-header * {
+    margin: 0;
+}
+
+.location-popup-subheader {
+  margin: 0.5rem;
+  font-size: 1rem;
+  font-weight: 400;
+  color: #777;
+}
+
+/* reviews section */
+.location-popup-reviews {
+  grid-row: 2 / 3;
+  grid-column: 1 / 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .location-popup-list {
-    list-style-type: none; /* don't show tick marks */
+  list-style-type: none;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0rem;
+  padding: 0 0 0 0.5rem;
+}
+
+.location-popup-list li {
+  display: flex;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.location-popup-reviews-num-posts {
+    margin-left: 0.5rem;
+}
+
+/* ratings summary section */
+.location-popup-attributes {
+  grid-row: 2 / 3;
+  grid-column: 2 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.location-popup-attributes h4 {
+  font-size: 1.5rem;
+  margin: 0.25rem 0;
+  font-weight: 500;
+}
+
+.location-popup-attributes > h4:first-child {
+    font-size: 3rem;
+}
+
+.full-stars {
+  color: goldenrod;
+}
+
+.empty-stars {
+  color: lightgray;
+}
+
+.male {
+    color: dodgerblue;
+}
+
+.female {
+    color: indianred;
+}
+
+.non-binary {
+    color: #aaa;
 }
