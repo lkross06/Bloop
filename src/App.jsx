@@ -175,7 +175,7 @@ function LocationPopUp(location, posts) {
         <p>{total / 3} {(total / 3 == 1)? "review" : "reviews"}</p>
       </span>
 
-      <button className="location-popup-button">Create Post</button>
+      <button className="location-popup-button" disabled>Create Post</button>
     </>
   );
 
@@ -349,12 +349,22 @@ function Map({ mapId }) {
   );
 }
 
+function LoginBanner(){
+  function handleLoginButton(){
+  }
+
+  return <div className="login-banner">
+    <p>Currently this page is read-only. <span className="login-button" onClick={handleLoginButton}>LOGIN</span> to create posts.</p>
+  </div>
+}
+
 /**
  * React App component for containing all React components in our application
  * @returns React component main container
  */
 export default function App() {
   return <>
+    <LoginBanner />
     <LoadScriptNext //load the API
       googleMapsApiKey={privateApiKey}
       libraries={["marker"]} //load marker library

@@ -1,12 +1,42 @@
 html {
-    font-family: system-ui, sans-serif;
-    font-size: 18px;
+  font-family: system-ui, sans-serif;
+  font-size: 18px;
 }
 
 body {
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  padding: 0;
 }
+
+.login-banner {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  user-select: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: indianred;
+  color: white;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.login-banner p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.login-button {
+  cursor: pointer;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.login-button:hover {
+  text-decoration: underline;
+}
+
+/* location marker pop-up */
 
 .location-popup {
   background-color: white;
@@ -114,6 +144,11 @@ body {
 
 .location-popup-button:hover {
   background-color: #1a73e8;
+}
+
+.location-popup-button:disabled {
+  background-color: #999;
+  color: #ddd;
 }
 
 /* other React components */
