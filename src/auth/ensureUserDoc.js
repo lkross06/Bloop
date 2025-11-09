@@ -1,0 +1,1 @@
+//Make sure each logged-in user as a Firestore doc in the users collection
