@@ -3,6 +3,9 @@ import ReactDOM from "react-dom/client";
 
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
 import * as DB from "./DBHandler"
+import e from "cors";
+
+const login = true;
 
 const privateApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 const privateMapID = import.meta.env.VITE_GOOGLE_MAPS_ID;
@@ -118,6 +121,22 @@ function GenderSymbol( {gender} ){
 }
 
 /**
+ * Creates a new modal React component that auto-destructs onclick
+ * outside of modal body
+ * @param {ReactComponentElement} modalContent JSX HTML for modal body
+ */
+function openModal(modalContent){
+
+  return <>
+    <div onClick={(event) => { event.target.remove(); }} class="modal-container">
+      <div onClick={(event) => { event.stopPropagation(); }} class="modal-body">
+        {modalContent}
+      </div>
+    </div>
+  </>
+}
+
+/**
  * Generate the HTML DOM for a location pop-up
  * @param {JSON} location Location to render a pop-up for
  * @param {JSON[]} posts list of Posts about this Location
@@ -176,7 +195,12 @@ function LocationPopUp(location, posts) {
         <p>{total / 3} {(total / 3 == 1)? "review" : "reviews"}</p>
       </span>
 
-      <button className="location-popup-button" disabled>Create Post</button>
+      {
+      //we're going to need to verify this manually when we send to the server
+      (login)? 
+        <button className="location-popup-button">Create Post</button> : 
+        <button className="location-popup-button" disabled>Create Post</button>
+      }
     </>
   );
 
@@ -454,6 +478,9 @@ function PostCreateForm(){
  */
 export default function App() {
   return <>
+    {openModal(
+      <p>tony sigma 6 7</p>
+    )}
     <LoginBanner />
     <LoadScriptNext //load the API
       googleMapsApiKey={privateApiKey}
