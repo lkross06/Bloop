@@ -4,7 +4,9 @@ import ReactDOM from "react-dom/client";
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
 import * as DB from "./DBHandler"
 
+//TODO: REPLACE WITH SESSION DATA
 const login = true;
+const accountID = 41;
 
 const privateApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 const privateMapID = import.meta.env.VITE_GOOGLE_MAPS_ID;
@@ -120,15 +122,32 @@ function GenderSymbol( {gender} ){
 }
 
 /**
+ * Tries to close a currently active modal (we can only open one modal
+ * at a time)
+ * @returns true if successful and there was a modal to close, false otherwise
+ */
+function closeModal(){
+  try{
+    let modal = document.getElementById("modal-container");
+    modal.remove();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Creates a new modal React component that auto-destructs onclick
  * outside of modal body
  * @param {ReactComponentElement} modalContent JSX HTML for modal body
  */
 function openModal(modalContent){
 
+  closeModal(); //close an active modal
+
   return <>
-    <div onClick={(event) => { event.target.remove(); }} className="modal-container">
-      <div onClick={(event) => { event.stopPropagation(); }} className="modal-body">
+    <div onClick={(event) => { event.target.remove(); }} id="modal-container">
+      <div onClick={(event) => { event.stopPropagation(); }} id="modal-body">
         {modalContent}
       </div>
     </div>
@@ -284,8 +303,13 @@ function Map({ mapId }) {
      * @returns true if successful, false otherwise
      */
     function openMarkerPopup(marker){
+      if (marker == null) return;
+
       try {
-          marker.content = LocationPopUp(marker.locationData, marker.postData);
+          const locationData = DB.getLocation(marker.locationID);
+          const postData = DB.getPostsForLocation(marker.locationID);
+
+          marker.content = LocationPopUp(locationData, postData);
           marker.zIndex = 2;
           marker.state = "popup"
 
@@ -294,7 +318,7 @@ function Map({ mapId }) {
           mapInstance.panTo({lat: marker.position.lat + 0.002, lng: marker.position.lng});
 
           return true
-      } catch {
+      } catch (e) {
         return false
       }
     }
@@ -305,13 +329,17 @@ function Map({ mapId }) {
      * @returns true if successful, false otherwise
      */
     function closeMarkerPopup(marker){
-      try{
-        marker.content = new PinElement(getPinProps(marker.postData));
+      if (marker == null) return;
+
+      try {
+        var postData = DB.getPostsForLocation(marker.locationID);
+
+        marker.content = new PinElement(getPinProps(postData));
         marker.zIndex = 1;
         marker.state = "pin";
 
         return true;
-      } catch {
+      } catch (e) {
         return false;
       }
     }
@@ -337,9 +365,8 @@ function Map({ mapId }) {
       //make the actual element
       const marker = new AdvancedMarkerElement({position: {lat: location.lat, lng: location.lng}, map: mapInstance, content: defaultPin}); //add the graphics and map
 
+      marker.locationID = location.locationID;
       marker.zIndex = 1;
-      marker.locationData = location;
-      marker.postData = posts;
       marker.state = "pin";
       
       google.maps.event.addListener(marker, "click", () => { handleMarkerClick(marker); });
@@ -406,7 +433,7 @@ function LoginBanner(){
  * React component form for creating a new Post
  * @returns React component
  */
-function PostCreateForm(){
+function PostCreateForm(locationID){
   //in theory, when this form appears the locationID is known (because that button triggers this modal)
   //  as well as the accountID (session storage..?)
   const defaultRating = 3;
@@ -419,7 +446,10 @@ function PostCreateForm(){
 
   function handleSubmit(e) {
     e.preventDefault();
-    DB.createPost(1, 41, cleanliness, availability, amenities, notes); //TODO: currently we're just choosing a random account/location to post from/about
+    DB.createPost(locationID, accountID, cleanliness, availability, amenities, notes); //TODO: currently we're just choosing a random account/location to post from/about
+    
+    //close the modal
+    closeModal();
   };
 
   return (

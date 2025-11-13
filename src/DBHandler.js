@@ -39,6 +39,21 @@ export function getPost(postID) {
   return posts[String(postID)] || null;
 }
 
+export function getPostsForLocation(locationID) {
+  const location = getLocation(locationID);
+
+  if (location == null){ return null; }
+
+  var posts = []
+
+  for (const postID of location.posts){
+    var post = getPost(postID);
+    if (post != null) { posts.push(post); }
+  }
+
+  return posts;
+}
+
 export function createPost(locationID, accountID, cleanliness, availability, amenities, notes){
   try {
     //generate a new unique ID
