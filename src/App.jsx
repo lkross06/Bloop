@@ -3,7 +3,6 @@ import ReactDOM from "react-dom/client";
 
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
 import * as DB from "./DBHandler"
-import e from "cors";
 
 const login = true;
 
@@ -128,8 +127,8 @@ function GenderSymbol( {gender} ){
 function openModal(modalContent){
 
   return <>
-    <div onClick={(event) => { event.target.remove(); }} class="modal-container">
-      <div onClick={(event) => { event.stopPropagation(); }} class="modal-body">
+    <div onClick={(event) => { event.target.remove(); }} className="modal-container">
+      <div onClick={(event) => { event.stopPropagation(); }} className="modal-body">
         {modalContent}
       </div>
     </div>
@@ -143,6 +142,22 @@ function openModal(modalContent){
  * @returns HTMLDivElement that can be rendered straight onto the Google Maps
  */
 function LocationPopUp(location, posts) {
+  function createPostModal(){
+    //open a post-create form with this modal
+
+    var span = document.createElement("span");
+
+    //make the span the first child in <body>
+    document.body.insertBefore(span, document.body.firstChild);
+
+    ReactDOM.createRoot(span).render(
+      <>
+      {openModal(
+        <PostCreateForm />
+      )}
+      </>
+    );
+  }
 
   let sum = 0;
   let total = 0;
@@ -198,7 +213,7 @@ function LocationPopUp(location, posts) {
       {
       //we're going to need to verify this manually when we send to the server
       (login)? 
-        <button className="location-popup-button">Create Post</button> : 
+        <button className="location-popup-button" onClick={createPostModal}>Create Post</button> : 
         <button className="location-popup-button" disabled>Create Post</button>
       }
     </>
@@ -478,9 +493,6 @@ function PostCreateForm(){
  */
 export default function App() {
   return <>
-    {openModal(
-      <p>tony sigma 6 7</p>
-    )}
     <LoginBanner />
     <LoadScriptNext //load the API
       googleMapsApiKey={privateApiKey}
@@ -489,6 +501,5 @@ export default function App() {
     >
       <Map mapId={privateMapID} />
     </LoadScriptNext>
-    <PostCreateForm />
   </>;
 }
