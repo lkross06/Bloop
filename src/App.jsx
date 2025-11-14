@@ -585,8 +585,8 @@ function PostCreateForm( { location }){
   );
 }
 
-function TestButton( { onClick } ){ 
-  return <button onClick={onClick}>TEST</button>
+function OverlayButton( { onClick, content } ){ 
+  return <button className = "overlay-button" onClick={onClick}>{content}</button>
 }
 
 /**
@@ -608,7 +608,15 @@ export default function App() {
 
   return <>
     <div className="overlay">
-      <h1 id="app-title" className="overlay">Bloop</h1>
+      <h1 id="app-title" className="overlay">bloop</h1>
+      <span className="overlay-buttons">
+        <OverlayButton onClick={() => {console.log("test"); }} content={
+          <p>＋</p>
+        } />
+        <OverlayButton onClick={() => {console.log("test"); }} content={
+          <p>?</p>
+        } />
+      </span>
     </div>
     <div className="map-container">
       <LoadScriptNext //load the API
