@@ -517,13 +517,19 @@ function PostCreateForm(locationID){
   );
 }
 
+function TestButton( { onClick } ){ 
+  return <button onClick={onClick}>TEST</button>
+}
+
 /**
  * React App component for containing all React components in our application
  * @returns React component main container
  */
 export default function App() {
+  const banner = (!login)? <LoginBanner /> : null
+
   return <>
-    <LoginBanner />
+    { banner }
     <LoadScriptNext //load the API
       googleMapsApiKey={privateApiKey}
       libraries={["marker"]} //load marker library
@@ -531,5 +537,6 @@ export default function App() {
     >
       <Map mapId={privateMapID} />
     </LoadScriptNext>
+    <TestButton onClick={ () => {DB.dumpAll()} } />
   </>;
 }

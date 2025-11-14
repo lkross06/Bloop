@@ -96,3 +96,10 @@ export function createPost(locationID, accountID, cleanliness, availability, ame
 export function getAccount(accountID) {
   return accounts[String(accountID)] || null;
 }
+
+/** -------- TESTING --------- */
+export function dumpAll(){
+  console.log(accounts);
+  console.log(posts);
+  console.log(locations);
+}
