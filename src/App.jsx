@@ -2,7 +2,9 @@ import { useRef, useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
-import * as DB from "./DBHandler"
+import DBHandler from "./DBHandler"
+
+const DB = new DBHandler();
 
 //TODO: REPLACE WITH SESSION DATA
 const login = true;
@@ -172,7 +174,7 @@ function LocationPopUp(location, posts) {
     ReactDOM.createRoot(span).render(
       <>
       {openModal(
-        <PostCreateForm />
+        <PostCreateForm locationID={location.locationID} />
       )}
       </>
     );
@@ -431,9 +433,10 @@ function LoginBanner(){
 
 /**
  * React component form for creating a new Post
+ * @param {JSON} props contains { locationID }, location to make post for
  * @returns React component
  */
-function PostCreateForm(locationID){
+function PostCreateForm( { locationID }){
   //in theory, when this form appears the locationID is known (because that button triggers this modal)
   //  as well as the accountID (session storage..?)
   const defaultRating = 3;
@@ -463,7 +466,7 @@ function PostCreateForm(locationID){
           min="0"
           max="5"
           value={cleanliness}
-          onChange={(e) => setCleanliness(e.target.value)}
+          onChange={(e) => setCleanliness(Number(e.target.value))}
           required
         />
         <span className="slider-value">{Math.round(cleanliness)}</span>
@@ -478,7 +481,7 @@ function PostCreateForm(locationID){
           min="0"
           max="5"
           value={availability}
-          onChange={(e) => setAvailability(e.target.value)}
+          onChange={(e) => setAvailability(Number(e.target.value))}
           required
         />
         <span className="slider-value">{Math.round(availability)}</span>
@@ -493,7 +496,7 @@ function PostCreateForm(locationID){
           min="0"
           max="5"
           value={amenities}
-          onChange={(e) => setAmenities(e.target.value)}
+          onChange={(e) => setAmenities(Number(e.target.value))}
           required
         />
         <span className="slider-value">{Math.round(amenities)}</span>
