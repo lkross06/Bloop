@@ -9,6 +9,38 @@ body {
   padding: 0;
 }
 
+.overlay * {
+  opacity: 0.95;
+  z-index: 50;
+}
+
+#app-title {
+  position: absolute;
+  top: 5%;
+  /* janky centering method */
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  font-size: 4em;
+  color: mediumpurple;
+
+  padding: 1rem 3rem;
+  background-color: white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 45px;
+}
+
+.map-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+
+  width: 100%;
+  height: 100%;
+}
+
 /* ------ MODAL -------------- */
 
 #modal-container {

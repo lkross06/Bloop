@@ -26,8 +26,8 @@ const maximumZoom = 16.5; //how far you can zoom in
 const defaultZoom = 15.5;
 
 const containerStyle = {
-  width: "100%",
-  height: "800px",
+  width: "100%", //fill entire map-container div
+  height: "100%",
 };
 
 /**
@@ -607,12 +607,17 @@ export default function App() {
     }, 0);
 
   return <>
-    <LoadScriptNext //load the API
-      googleMapsApiKey={privateApiKey}
-      libraries={["marker"]} //load marker library
-      mapIds={[privateMapID]}
-    >
-      <Map mapId={privateMapID} />
-    </LoadScriptNext>
+    <div className="overlay">
+      <h1 id="app-title" className="overlay">Bloop</h1>
+    </div>
+    <div className="map-container">
+      <LoadScriptNext //load the API
+        googleMapsApiKey={privateApiKey}
+        libraries={["marker"]} //load marker library
+        mapIds={[privateMapID]}
+      >
+        <Map mapId={privateMapID} />
+      </LoadScriptNext>
+    </div>
   </>;
 }
