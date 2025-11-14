@@ -7,7 +7,7 @@ import DBHandler from "./DBHandler"
 const DB = new DBHandler();
 
 //TODO: REPLACE WITH SESSION DATA
-const login = false;
+const login = true;
 const accountID = 41;
 
 const privateApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
@@ -302,8 +302,8 @@ function LocationPopUp(location, posts) {
       {
       //we're going to need to verify this manually when we send to the server
       (login)? 
-        <button className="location-popup-button" >Create Post</button> : 
-        <button className="location-popup-button" onClick={createPostModal}>Create Post</button>
+        <button className="location-popup-button" onClick={createPostModal}>Create Post</button> : 
+        <button className="location-popup-button" disabled>Create Post</button>
       }
     </>
   );
