@@ -7,7 +7,7 @@ import DBHandler from "./DBHandler"
 const DB = new DBHandler();
 
 //TODO: REPLACE WITH SESSION DATA
-const login = true;
+const login = false;
 const accountID = 41;
 
 const privateApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
@@ -124,13 +124,84 @@ function GenderSymbol( {gender} ){
 }
 
 /**
+ * Tries to close a currently active banner (we can only open one banner
+ * at a time)
+ * @param {String} id unique id for this banner (so we don't accidentally close other banners)
+ * @param {String} force if true, banner is deleted immediately. if false, closing animation plays and asynchronously deleted
+ * @returns true if successful and there was a banner to close, false otherwise
+ */
+function closeBanner(id, force = false){
+  try {
+    let banner = document.getElementById(String(id));
+  
+    // asynchronously remove item after 2 seconds (once animation is done)
+    if (!force){
+      banner.firstChild.classList.remove("open"); //start slide up
+      setTimeout(
+        () => { banner.remove(); },
+        2000
+      );
+    } else {
+      banner.remove();
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * React component for showing a banner at the top of the site
+ * @param {String} id unique id for this banner (so we don't accidentally close other banners)
+ * @param {HTMLElement} content content to put in banner
+ * @param {String} backgroundColor background color for banner
+ * @param {Number} lifetime ms until the banner is closed, or -1 to stay open indefinitely
+ */
+function openBanner(id, content, backgroundColor, lifetime = -1){
+
+  //try to close the same instance of this banner
+  closeBanner(id, true);
+
+  //make the span the first child in <body>
+  var banner = document.createElement("div");
+  banner.setAttribute("id", String(id));
+  banner.setAttribute("class", "banner");
+  banner.setAttribute("style", "z-index: "
+    + String(10 + document.getElementsByClassName("banner").length) //default value is 100, but stack on top of any existing banners
+  );
+  
+  document.body.insertBefore(banner, document.body.firstChild);
+
+  ReactDOM.createRoot(banner).render(
+    <>
+      <div className="banner-container" style={ {"backgroundColor" : String(backgroundColor)} }>
+        {content}
+      </div>
+    </>
+  );
+
+  //asynchronously start the open slide animation
+  setTimeout(() => {
+    banner.firstChild.classList.add("open");
+  }, 0);
+
+  //asynchronously wait to close
+  if (lifetime != -1){
+    setTimeout(() => {
+      closeBanner(id); //TODO: it will close WHATEVER banner is open, even if it's from another lifetime...
+    }, lifetime);
+  }
+}
+
+/**
  * Tries to close a currently active modal (we can only open one modal
  * at a time)
  * @returns true if successful and there was a modal to close, false otherwise
  */
 function closeModal(){
   try{
-    let modal = document.getElementById("modal-container");
+    let modal = document.getElementById("modal");
     modal.remove();
     return true;
   } catch {
@@ -145,10 +216,11 @@ function closeModal(){
  */
 function openModal(modalContent){
 
-  let res = closeModal(); //close an active modal
+  closeModal(); //close an active modal
 
   //make the span the first child in <body>
   var span = document.createElement("span");
+  span.setAttribute("id", "modal");
   document.body.insertBefore(span, document.body.firstChild);
 
   ReactDOM.createRoot(span).render(
@@ -230,8 +302,8 @@ function LocationPopUp(location, posts) {
       {
       //we're going to need to verify this manually when we send to the server
       (login)? 
-        <button className="location-popup-button" onClick={createPostModal}>Create Post</button> : 
-        <button className="location-popup-button" disabled>Create Post</button>
+        <button className="location-popup-button" >Create Post</button> : 
+        <button className="location-popup-button" onClick={createPostModal}>Create Post</button>
       }
     </>
   );
@@ -414,20 +486,6 @@ function Map({ mapId }) {
 }
 
 /**
- * React component for showing a banner at the top of the site telling user to log in with log in button
- * @returns React component banner
- */
-function LoginBanner(){
-  function handleLoginButton(){
-    console.log("log in");
-  }
-
-  return <div className="login-banner">
-    <p>Currently this page is read-only. <span className="login-button" onClick={handleLoginButton}>Login</span> to create posts.</p>
-  </div>
-}
-
-/**
  * React component form for creating a new Post
  * @param {JSON} props contains { location }, location to make post for
  * @returns React component
@@ -445,11 +503,15 @@ function PostCreateForm( { location }){
 
   function handleSubmit(e) {
     e.preventDefault();
-    DB.createPost(location.locationID, accountID, cleanliness, availability, amenities, notes); //TODO: currently we're just choosing a random account/location to post from/about
+    let postID = DB.createPost(location.locationID, accountID, cleanliness, availability, amenities, notes); //TODO: currently we're just choosing a random account/location to post from/about
     
     //make a success message appear
-    openModal(
-      <h3 className="modal-header post-create-success">Post Created Succesfully!</h3>
+    closeModal();
+    openBanner(
+      "create-" + String(postID),
+      <p>Post created successfully!</p>,
+      "mediumseagreen",
+      5000
     );
   };
 
@@ -532,10 +594,19 @@ function TestButton( { onClick } ){
  * @returns React component main container
  */
 export default function App() {
-  const banner = (!login)? <LoginBanner /> : null
+
+    //asynchronously trigger so it runs after the App renders
+    setTimeout( () => {
+      if (!login){
+        openBanner(
+          "login-banner",
+          <p>Currently this page is read-only. <span className="login-button" onClick={() => { console.log("HII") }}>Login</span> to create posts.</p>,
+          "indianred"
+        );
+      }
+    }, 0);
 
   return <>
-    { banner }
     <LoadScriptNext //load the API
       googleMapsApiKey={privateApiKey}
       libraries={["marker"]} //load marker library
@@ -543,6 +614,5 @@ export default function App() {
     >
       <Map mapId={privateMapID} />
     </LoadScriptNext>
-    <TestButton onClick={ () => {DB.dumpAll()} } />
   </>;
 }

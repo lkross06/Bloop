@@ -89,9 +89,9 @@ class DBHandler {
 
       this.posts[id] = newPost;
 
-      return true;
+      return id;
     } catch (e) {
-      return false;
+      return null;
     }
   }
 
