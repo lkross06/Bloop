@@ -145,15 +145,21 @@ function closeModal(){
  */
 function openModal(modalContent){
 
-  closeModal(); //close an active modal
+  let res = closeModal(); //close an active modal
 
-  return <>
+  //make the span the first child in <body>
+  var span = document.createElement("span");
+  document.body.insertBefore(span, document.body.firstChild);
+
+  ReactDOM.createRoot(span).render(
+    <>
     <div onClick={(event) => { event.target.remove(); }} id="modal-container">
       <div onClick={(event) => { event.stopPropagation(); }} id="modal-body">
         {modalContent}
       </div>
     </div>
-  </>
+    </>
+  );
 }
 
 /**
@@ -165,18 +171,8 @@ function openModal(modalContent){
 function LocationPopUp(location, posts) {
   function createPostModal(){
     //open a post-create form with this modal
-
-    var span = document.createElement("span");
-
-    //make the span the first child in <body>
-    document.body.insertBefore(span, document.body.firstChild);
-
-    ReactDOM.createRoot(span).render(
-      <>
-      {openModal(
-        <PostCreateForm locationID={location.locationID} />
-      )}
-      </>
+    openModal(
+      <PostCreateForm location={location} />
     );
   }
 
@@ -206,9 +202,9 @@ function LocationPopUp(location, posts) {
   //render JSX content inside div
   ReactDOM.createRoot(div).render(
     <>
-      <span className="location-popup-header">
+      <span className="modal-header">
         <h3>{location.title}</h3>
-        <h4 className="location-popup-subheader">{location.lat}° N, {-1 * location.lng}° W | <GenderSymbol gender={location.gender} /></h4>
+        <h4 className="modal-subheader">{location.lat}° N, {-1 * location.lng}° W | <GenderSymbol gender={location.gender} /></h4>
       </span>
 
       <span className="location-popup-reviews">
@@ -433,10 +429,10 @@ function LoginBanner(){
 
 /**
  * React component form for creating a new Post
- * @param {JSON} props contains { locationID }, location to make post for
+ * @param {JSON} props contains { location }, location to make post for
  * @returns React component
  */
-function PostCreateForm( { locationID }){
+function PostCreateForm( { location }){
   //in theory, when this form appears the locationID is known (because that button triggers this modal)
   //  as well as the accountID (session storage..?)
   const defaultRating = 3;
@@ -449,14 +445,21 @@ function PostCreateForm( { locationID }){
 
   function handleSubmit(e) {
     e.preventDefault();
-    DB.createPost(locationID, accountID, cleanliness, availability, amenities, notes); //TODO: currently we're just choosing a random account/location to post from/about
+    DB.createPost(location.locationID, accountID, cleanliness, availability, amenities, notes); //TODO: currently we're just choosing a random account/location to post from/about
     
-    //close the modal
-    closeModal();
+    //make a success message appear
+    openModal(
+      <h3 className="modal-header post-create-success">Post Created Succesfully!</h3>
+    );
   };
 
   return (
     <form onSubmit={handleSubmit} className="post-create-form">
+      <span className="modal-header">
+        <h3>{location.title}</h3>
+        <h4 className="modal-subheader">{location.lat}° N, {-1 * location.lng}° W | <GenderSymbol gender={location.gender} /></h4>
+      </span>
+
       <div className="post-create-form-group">
         <label htmlFor="cleanliness" className="post-create-form-label">Cleanliness <span className="required-asterisk">*</span></label>
         <input
