@@ -21,12 +21,12 @@ export async function loginWithGoogle(){
 }
 
 // signs in an existing user
-export async function loginWithEmail(email: string, password: string){
+export async function loginWithEmail(email, password){
     return signInWithEmailAndPassword(auth, email, password);
 }
 
 // creates a new account with their email and password
-export async function registerWithEmail(email: string, password: string){
+export async function registerWithEmail(email, password){
     return createUserWithEmailAndPassword(auth, email, password);
 }
 
