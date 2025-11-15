@@ -1,6 +1,30 @@
+:root{
+  /* theme colors */
+  --col-primary: slateblue;
+  --col-primary-dark: darkslateblue;
+
+  --col-secondary: aliceblue;
+  --col-secondary-light: white;
+
+  --col-text-primary: #333;
+  --col-text-secondary: slategray;
+  
+  --col-failure: indianred;
+  --col-success: mediumseagreen;
+  --col-disabled: dimgrey;
+
+  --col-stars-full: goldenrod;
+  --col-stars-empty: lightgrey;
+
+  --col-male: dodgerblue;
+  --col-female: indianred;
+  --col-non-binary: slategray;
+}
+
 html {
   font-family: system-ui, sans-serif;
   font-size: 18px;
+  color: var(--col-text-primary);
   user-select: none;
 }
 
@@ -10,7 +34,6 @@ body {
 }
 
 .overlay * {
-  opacity: 0.98;
   z-index: 5;
   position: absolute;
 
@@ -39,8 +62,8 @@ body {
   justify-content: center;
   align-items: center;
 
-  background-color: slateblue;
-  color: aliceblue;
+  background-color: var(--col-primary);
+  color: var(--col-secondary);
 
   padding: 1rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
@@ -51,7 +74,7 @@ body {
 }
 
 .overlay-button:active {
-  background-color: darkslateblue;
+  background-color: var(--col-primary-dark);
 }
 
 #app-title {
@@ -61,7 +84,7 @@ body {
   transform: translate(-50%, -50%);
 
   font-size: 4rem;
-  color: slateblue;
+  color: var(--col-primary);
 
   /* easier to see on background */
   text-shadow: 0 4px 20px rgba(255, 255, 255, 1);
@@ -79,7 +102,7 @@ body {
 }
 
 .about {
-  width: 80%;
+  width: 40rem;
 }
 
 /* ------ MODAL -------------- */
@@ -97,7 +120,7 @@ body {
 }
 
 #modal-body {
-  background-color: white;
+  background-color: var(--col-secondary-light);
   min-width: 40%;
   min-height: 40%;
 
@@ -118,7 +141,7 @@ body {
   font-weight: 600;
   margin: 0;
   text-align: center;
-  color: #222;
+  color: var(--col-text-primary);
   padding-bottom: 0.25rem;
 }
 
@@ -130,7 +153,7 @@ body {
   margin: 0.5rem;
   font-size: 1rem;
   font-weight: 400;
-  color: #777;
+  color: var(--col-text-secondary);
 }
 
 
@@ -150,10 +173,10 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  color: white;
+  color: var(--col-secondary-light);
   font-size: 1rem;
   text-align: center;
-  font-weight: 400;
+  font-weight: 700;
 
   /* start above the screen ready to slide down */
   transform: translateY(-100%);
@@ -172,7 +195,7 @@ body {
 
 .login-button {
   cursor: pointer;
-  font-weight: 800;
+  font-weight: 1000;
   text-decoration: none;
 }
 
@@ -183,7 +206,7 @@ body {
 /* ------- LOCATION MARKER POP-UP ------- */
 
 .location-popup {
-  background-color: white;
+  background-color: var(--col-secondary-light);
   padding: 1.5rem;
   width: 350px;
   font-size: 1rem;
@@ -198,7 +221,7 @@ body {
 .location-popup p {
   margin: 0 0 0.5rem 0;
   font-weight: 500;
-  color: #555;
+  color: var(--col-text-primary);
 }
 
 /* reviews section */
@@ -226,7 +249,7 @@ body {
 }
 
 .location-popup-reviews-num-posts {
-    margin-left: 0.5rem;
+  margin-left: 0.5rem;
 }
 
 /* ratings summary section */
@@ -254,8 +277,8 @@ body {
   grid-column: 1 / 3;
   padding: 0.75rem 1rem;
   font-size: 1rem;
-  background-color: dodgerblue;
-  color: white;
+  background-color: var(--col-primary);
+  color: var(--col-secondary);
   border: none;
   border-radius: 8px;
   font-weight: 600;
@@ -264,34 +287,33 @@ body {
 }
 
 .location-popup-button:hover, .post-create-form-submit:hover {
-  background-color: #1A73E8;
+  background-color: var(--col-primary-dark);
 }
 
 .location-popup-button:disabled {
-  background-color: #999;
-  color: #ddd;
+  background-color: var(--col-disabled);
 }
 
 /* other React components */
 
 .full-stars {
-  color: goldenrod;
+  color: var(--col-stars-full);
 }
 
 .empty-stars {
-  color: lightgray;
+  color: var(--col-stars-empty);
 }
 
 .male {
-    color: dodgerblue;
+    color: var(--col-male);
 }
 
 .female {
-    color: indianred;
+    color: var(--col-female);
 }
 
 .non-binary {
-    color: #888;
+    color: var(--col-non-binary);
 }
 
 /* ------- CREATE POST FORM ------- */
@@ -302,7 +324,8 @@ body {
   gap: 1.5rem;
   padding: 2rem;
   margin: 0 auto;
-  width: 75%;
+  min-width: 20rem;
+  width: 30rem;
 }
 
 .post-create-form-group {
@@ -313,7 +336,6 @@ body {
 
 .post-create-form-label {
   font-weight: 500;
-  color: #333;
 }
 
 .post-create-form-slider {
@@ -323,7 +345,7 @@ body {
 .slider-value {
   text-align: right;
   font-size: 0.9rem;
-  color: #666;
+  color: var(--col-text-secondary);
 }
 
 .post-create-form-textarea {
@@ -362,7 +384,7 @@ body {
 }
 
 .required-asterisk {
-  color: red;
+  color: var(--col-failure);
   font-weight: 500;
 }
 
