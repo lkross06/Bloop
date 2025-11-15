@@ -519,7 +519,9 @@ function PostCreateForm( { location }){
     <form onSubmit={handleSubmit} className="post-create-form">
       <span className="modal-header">
         <h3>{location.title}</h3>
-        <h4 className="modal-subheader">{location.lat}° N, {-1 * location.lng}° W | <GenderSymbol gender={location.gender} /></h4>
+        <h4 className="post-create-form-rating"><StarRating rating={
+          (cleanliness + amenities + availability) / 3
+        } /></h4>
       </span>
 
       <div className="post-create-form-group">
@@ -527,9 +529,10 @@ function PostCreateForm( { location }){
         <input
           type="range"
           id="cleanliness"
-          className={"form-slider score-" + Math.round(cleanliness)}
+          className="post-create-form-slider"
           min="0"
           max="5"
+          step="0.01"
           value={cleanliness}
           onChange={(e) => setCleanliness(Number(e.target.value))}
           required
@@ -542,9 +545,10 @@ function PostCreateForm( { location }){
         <input
           type="range"
           id="availability"
-          className={"form-slider score-" + Math.round(availability)}
+          className="post-create-form-slider"
           min="0"
           max="5"
+          step="0.01"
           value={availability}
           onChange={(e) => setAvailability(Number(e.target.value))}
           required
@@ -557,9 +561,10 @@ function PostCreateForm( { location }){
         <input
           type="range"
           id="amenities"
-          className={"form-slider score-" + Math.round(amenities)}
+          className="post-create-form-slider"
           min="0"
           max="5"
+          step="0.01"
           value={amenities}
           onChange={(e) => setAmenities(Number(e.target.value))}
           required
