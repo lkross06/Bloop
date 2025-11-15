@@ -78,7 +78,7 @@ body {
 }
 
 #app-title {
-  bottom: -1rem;
+  top: 4.5rem;
   /* janky centering method */
   left: 50%;
   transform: translate(-50%, -50%);
@@ -87,7 +87,7 @@ body {
   color: var(--col-primary);
 
   /* easier to see on background */
-  text-shadow: 0 4px 20px rgba(255, 255, 255, 1);
+  text-shadow: 0 0 10px white;
 }
 
 .map-container {
@@ -208,18 +208,18 @@ body {
 .location-popup {
   background-color: var(--col-secondary-light);
   padding: 1.5rem;
-  width: 350px;
+  width: 400px;
   font-size: 1rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   border-radius: 12px;
   display: grid;
   grid-template-rows: auto 1fr auto;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem 1.25rem;
+  /* gap: 0.75rem 1.25rem; */
 }
 
 .location-popup p {
-  margin: 0 0 0.5rem 0;
+  /* margin: 0 0 0.6rem 0; */
   font-weight: 500;
   color: var(--col-text-primary);
 }
@@ -228,28 +228,17 @@ body {
 .location-popup-reviews {
   grid-row: 2 / 3;
   grid-column: 1 / 2;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-}
+  
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 0;
 
-.location-popup-list {
-  list-style-type: none;
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 0rem;
-  padding: 0 0 0 0.5rem;
-}
-
-.location-popup-list li {
-  display: flex;
+  text-align: right;
   align-items: center;
-  font-size: 0.95rem;
-}
+  justify-content: center;
 
-.location-popup-reviews-num-posts {
-  margin-left: 0.5rem;
+  margin: 1rem 0 1.5rem 0;
 }
 
 /* ratings summary section */

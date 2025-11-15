@@ -96,11 +96,11 @@ function StarRating( {rating} ){
   let nFull = Math.round(rating);
   let nEmpty = 5 - nFull;
 
-  return <>
+  return <span>
     {/* Use CSS classes to color the different stars */}
     <span className="full-stars">{star.repeat(nFull)}</span>
     <span className="empty-stars">{star.repeat(nEmpty)}</span>
-  </>
+  </span>
 }
 
 /**
@@ -248,24 +248,32 @@ function LocationPopUp(location, posts) {
     );
   }
 
-  let sum = 0;
-  let total = 0;
+  let cleanliness_sum = 0;
+  let availability_sum = 0;
+  let amenities_sum = 0;
 
-  //count the number of posts with a rating 0, rating 1, etc. we will round DOWN for our purposes
-  //the ith value is the number of posts with a rating i, where 0 <= i <= 5
-  let postRatings = [0, 0, 0, 0, 0, 0];
+  let total_posts = 0;
 
   for (const post of posts){
-    let postSum = post.cleanliness + post.availability + post.amenities; //sum all ratings in one post
-    
-    postRatings[Math.round(postSum / 3)] += 1; //get the post average rating
+    cleanliness_sum += post.cleanliness;
+    availability_sum += post.availability;
+    amenities_sum += post.amenities;
 
-    sum += postSum;
-    total += 3;
+    total_posts += 1;
   }
 
   let locationRating = 0;
-  if (total != 0) locationRating = (sum / total).toFixed(1); //get the rating by taking average, round to 1 decimal pt for formatting
+  let cleanlinessRating = 0;
+  let availabilityRating = 0;
+  let amenitiesRating = 0;
+
+  if (total_posts != 0) {
+    locationRating = ((cleanliness_sum + availability_sum + amenities_sum) / (total_posts * 3)).toFixed(1); //get the rating by taking average, round to 1 decimal pt for formatting
+    
+    cleanlinessRating = Math.round(cleanliness_sum/total_posts);
+    availabilityRating = Math.round(availability_sum/total_posts);
+    amenitiesRating = Math.round(amenities_sum/total_posts);
+  }
 
   //create empty div
   const div = document.createElement("div");
@@ -280,23 +288,22 @@ function LocationPopUp(location, posts) {
       </span>
 
       <span className="location-popup-reviews">
-        <p>Reviews</p>
-        <ul className="location-popup-list">
-          {
-            //map each rating (0-5) to the number of posts with that rating
-            postRatings.map((numPosts, rating) => (
-              <li key={rating}><StarRating rating={rating} /><span className="location-popup-reviews-num-posts">{numPosts}</span></li>
-            ))
-          }
-        </ul>
+        <p>Cleanliness</p>
+        <StarRating rating={ cleanlinessRating } />
+        
+        <p>Availability</p>
+        <StarRating rating={ availabilityRating } />
+        
+        <p>Amenities</p>
+        <StarRating rating={ amenitiesRating } />
+        
       </span>
 
       <span className="location-popup-attributes">
-        <h4>{(total != 0)? locationRating : "--"}</h4>
+        <h4>{(total_posts != 0)? locationRating : "--"}</h4>
         <h4><StarRating rating={locationRating} /></h4>
 
-        {/* notice that we divide total by 3 because each batch of cleanliness/availability/amenities constitutes 1 post */}
-        <p>{total / 3} {(total / 3 == 1)? "review" : "reviews"}</p>
+        <p>{total_posts} {(total_posts == 1)? "review" : "reviews"}</p>
       </span>
 
       {
@@ -384,11 +391,12 @@ function Map({ mapId }) {
           marker.state = "popup"
 
           //when a pop-up is shown, pan the map over to center on that location
-          //and offset by 0.002° N so that the large location pop-up is centered
-          mapInstance.panTo({lat: marker.position.lat + 0.002, lng: marker.position.lng});
+          //and offset by 0.003° N so that the large location pop-up is centered
+          mapInstance.panTo({lat: marker.position.lat + 0.003, lng: marker.position.lng});
 
           return true
       } catch (e) {
+        console.error(e);
         return false
       }
     }
@@ -410,6 +418,7 @@ function Map({ mapId }) {
 
         return true;
       } catch (e) {
+        console.error(e);
         return false;
       }
     }
@@ -602,6 +611,7 @@ function OverlayButton( { onClick, content } ){
 function AboutText(){
   return <>
     <div className="about">
+      <h2 className="modal-header">About Bloop</h2>
       <p>Bloop was developed as the capstone project for COM SCI 35L, taught at UCLA in Fall 2025 term with Professor Tobias Duerschmid,
         by Janani Acharya, Shrika Andhe, Shayla Kumaresan, Lucas Kalani Ross.
       </p>
