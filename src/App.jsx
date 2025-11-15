@@ -585,8 +585,25 @@ function PostCreateForm( { location }){
   );
 }
 
+/**
+ * Create a React component button to be placed on the overlay UI
+ * @param {JSON} props contains onClick (function to call on button click), content (content inside button)
+ * @returns React component
+ */
 function OverlayButton( { onClick, content } ){ 
   return <button className = "overlay-button" onClick={onClick}>{content}</button>
+}
+
+function AboutText(){
+  return <>
+    <div className="about">
+      <p>Bloop was developed as the capstone project for COM SCI 35L, taught at UCLA in Fall 2025 term with Professor Tobias Duerschmid,
+        by Janani Acharya, Shrika Andhe, Shayla Kumaresan, Lucas Kalani Ross.
+      </p>
+      <p>The project is open-source on <a href="https://github.com/lkross06/Bloop">GitHub</a>.
+      </p>
+    </div>
+  </>
 }
 
 /**
@@ -613,7 +630,7 @@ export default function App() {
         <OverlayButton onClick={() => {console.log("test"); }} content={
           <p>＋</p>
         } />
-        <OverlayButton onClick={() => {console.log("test"); }} content={
+        <OverlayButton onClick={() => { openModal(AboutText()); }} content={
           <p>?</p>
         } />
       </span>
