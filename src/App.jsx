@@ -7,7 +7,7 @@ import DBHandler from "./DBHandler"
 const DB = new DBHandler();
 
 //TODO: REPLACE WITH SESSION DATA
-const login = true;
+var login = false;
 const accountID = 41;
 
 const privateApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
@@ -617,7 +617,10 @@ export default function App() {
       if (!login){
         openBanner(
           "login-banner",
-          <p>Currently this page is read-only. <span className="login-button" onClick={() => { console.log("HII") }}>Login</span> to create posts.</p>,
+          <p>Currently this page is read-only. <span className="login-button" onClick={() => {
+            closeBanner("login-banner");
+            login = true;
+          }}>Login</span> to create posts.</p>,
           "indianred"
         );
       }
