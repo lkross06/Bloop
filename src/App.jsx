@@ -331,6 +331,9 @@ function Map({ mapId }) {
 
   //currently selected marker with a pop-up
   let activeMarker = null;
+  
+  //also keep track of the currently drawn device marker
+  let activeDeviceMarker = null;
 
   //we need React's useEffect to stay connected with external
   //systems (in this case our API)
@@ -346,9 +349,83 @@ function Map({ mapId }) {
     setMapInstance(map);
   };
 
+  //window has a built-in location tracker as an asynchronous API
+  //  that pings when it finds the laptop's GPS coordinates
+  if ("geolocation" in navigator) {
+    //geolocation is available
+    navigator.geolocation.watchPosition(
+      (position) => { /* SUCCESS CALLBACK FUNCTION */
+        console.log(position.coords);
+
+        updateDeviceMarker({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+      }
+    );
+  } else {
+    //gelocation is not available
+    //we don't really have to do anything
+  }
+
   //NOTE: choosing to use JS objects instead of React objects (<AdvancedMarker... />) since this is more of a
   //"back end" endeavor and easy communication with other external services isn't guranteed if we use React objects.
   //So the only React object is the map, which handles everything.
+
+  /**
+   * Asynchronously load JS object (Marker) that updates whenever Navigator API asynchronously updates
+   * device's current GPS position
+   * 
+   * @param {*} position contaings {lat, lng} to updated AdvancedMarkerElement
+   */
+  async function updateDeviceMarker(position){
+    //first delete the currently drawn marker if there is one
+    if (activeDeviceMarker != null){
+      activeDeviceMarker.map = null; //dereference from map
+    }
+
+    const { AdvancedMarkerElement } = await google.maps.importLibrary("marker"); //the asynchronous part comes in here
+
+    try {
+
+      let parser = new DOMParser();
+      //modified from https://developers.google.com/maps/documentation/javascript/advanced-markers/graphic-markers#javascript
+      const svgSrc = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-16 -16 32 32">
+        <defs>
+          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="rgba(0,0,0,0.2)" />
+          </filter>
+        </defs>
+
+        <!-- Outer circle -->
+        <circle cx="0" cy="0" r="10" fill="aliceblue" filter="url(#shadow)" />
+
+        <!-- Inner circle -->
+        <circle cx="0" cy="0" r="8" fill="slateblue" />
+      </svg>`;
+      const svg = parser.parseFromString(svgSrc, 'image/svg+xml').documentElement;
+
+      //make the actual element
+      const marker = new AdvancedMarkerElement(
+        {position: position,
+        map: mapInstance
+        });
+      marker.append(svg);
+
+      marker.zIndex = 2; //draw above any location markers
+
+      if (activeDeviceMarker == null) {
+        //if this is our first time loading the page, pan to the user's location
+        mapInstance.panTo(position);
+        mapInstance.setZoom((maximumZoom + defaultZoom) / 2); //zoom into the user's position while leaving peripherals availabile
+      }
+
+      activeDeviceMarker = marker;
+
+    } catch (e) {
+      console.error(e);
+    }
+  }
 
   /**
    * Asynchronously load JS object (Marker) to render on Google Maps Map React component.
@@ -612,9 +689,8 @@ function AboutText(){
   return <>
     <div className="about">
       <h2 className="modal-header">About Bloop</h2>
-      <p>Bloop was developed as the capstone project for COM SCI 35L, taught at UCLA in Fall 2025 term with Professor Tobias Duerschmid,
-        by Janani Acharya, Shrika Andhe, Shayla Kumaresan, Lucas Kalani Ross.
-      </p>
+      <p>Janani Acharya, Shrika Andhe, Shayla Kumaresan, Lucas Kalani Ross</p>
+      <p>Bloop was developed as the capstone project for COM SCI 35L, taught at UCLA in Fall 2025 quarter with Professor Tobias Duerschmid.</p>
       <p>The project is open-source on <a href="https://github.com/lkross06/Bloop">GitHub</a>.
       </p>
     </div>
@@ -627,19 +703,19 @@ function AboutText(){
  */
 export default function App() {
 
-    //asynchronously trigger so it runs after the App renders
-    setTimeout( () => {
-      if (!login){
-        openBanner(
-          "login-banner",
-          <p>Currently this page is read-only. <span className="login-button" onClick={() => {
-            closeBanner("login-banner");
-            login = true;
-          }}>Login</span> to create posts.</p>,
-          "indianred"
-        );
-      }
-    }, 0);
+  //asynchronously trigger so it runs after the App renders
+  setTimeout( () => {
+    if (!login){
+      openBanner(
+        "login-banner",
+        <p>Currently this page is read-only. <span className="login-button" onClick={() => {
+          closeBanner("login-banner");
+          login = true;
+        }}>Login</span> to create posts.</p>,
+        "indianred"
+      );
+    }
+  }, 0);
 
   return <>
     <div className="overlay">
