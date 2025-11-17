@@ -599,7 +599,12 @@ function Map({ mapId, trigger, onPostCreateSuccess }) {
           const locationData = DB.getLocation(marker.locationID);
           const postData = DB.getPostsForLocation(marker.locationID);
 
-          marker.content = LocationPopUp(locationData, postData, onPostCreateSuccess);
+          marker.content = LocationPopUp(locationData, postData, () => {
+            //edit the callback function slightly so that the map 
+            //  stays centered on wherever the post was just made
+            onPostCreateSuccess();
+            mapInstance.panTo({lat: marker.position.lat + 0.003, lng: marker.position.lng})
+          });
           marker.zIndex = 2;
           marker.state = "popup"
 
@@ -684,10 +689,7 @@ function Map({ mapId, trigger, onPostCreateSuccess }) {
   return (
     <GoogleMap
       mapContainerStyle={containerStyle}
-      center={{
-        lat: mapStartCoords.lat,
-        lng: mapStartCoords.lng
-      }}
+      center={mapStartCoords}
       zoom={defaultZoom} //let's show all of LA for now
       onLoad={onLoad}
       options={{
