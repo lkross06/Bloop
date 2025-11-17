@@ -28,7 +28,7 @@ const defaultZoom = 15.5;
 //for the create location map
 const minimumZoomSmall = 11.5;
 const maximumZoomSmall = 16.9; //at 17, more labels are shown that would overcrowd the space
-const defaultZoomSmall = 16.5
+const defaultZoomSmall = 14;
 
 const containerStyle = {
   width: "100%", //fill entire map-container div
@@ -812,10 +812,6 @@ function LocationCreateForm(){
 
   function handleSubmit(e) {
     e.preventDefault();
-    
-    console.log(name)
-    console.log(gender)
-    console.log(location)
 
     let locationID = DB.createLocation(name, gender, location.lat, location.lng);
     
@@ -903,7 +899,12 @@ function LocationCreateForm(){
         </div>
       </div>
 
-      <button type="submit" className="create-form-submit">Create Location</button>
+      {
+        //we're going to need to verify this manually when we send to the server
+        (login)? 
+          <button type="submit" className="create-form-submit">Create Location</button> : 
+          <button type="submit" className="create-form-submit" disabled>Create Location</button>
+      }
     </form>
   );
 }

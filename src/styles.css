@@ -305,7 +305,7 @@ body {
     color: var(--col-non-binary);
 }
 
-/* ------- CREATE POST FORM ------- */
+/* ------- CREATE FORMS ------- */
 
 .create-form {
   display: flex;
@@ -336,6 +336,10 @@ body {
 .create-form-slider {
   width: 100%;
   accent-color: var(--col-primary-dark);
+}
+
+.create-form-submit:disabled {
+  background-color: var(--col-disabled);
 }
 
 .slider-value {
@@ -392,6 +396,11 @@ body {
     color 0.3s ease,
     opacity 0.3s ease;
   opacity: 0.7;
+}
+
+.gender-option span:hover {
+  cursor: pointer;
+  opacity: 1; 
 }
 
 .gender-option input{
