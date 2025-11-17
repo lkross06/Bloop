@@ -247,13 +247,14 @@ function openModal(modalContent){
  * Generate the HTML DOM for a location pop-up
  * @param {JSON} location Location to render a pop-up for
  * @param {JSON[]} posts list of Posts about this Location
+ * @param {function} onSuccess callback function to trigger Map to update
  * @returns HTMLDivElement that can be rendered straight onto the Google Maps
  */
-function LocationPopUp(location, posts) {
+function LocationPopUp(location, posts, onSuccess) {
   function createPostModal(){
     //open a create form with this modal
     openModal(
-      <PostCreateForm location={location} />
+      <PostCreateForm location={location} onSuccess={onSuccess} />
     );
   }
 
@@ -439,10 +440,10 @@ function MapSmall({ mapId, updateParentLocation }) {
 
 /**
  * React Map component for rendering Google Maps interactable map, along with all things rendered in it 
- * @param {JSON} props Takes { mapID }, private map ID
+ * @param {JSON} props Takes { mapId, trigger, onPostCreateSuccess }-- private Map ID, trigger variable to watch --> re-render markers, and callback function to trigger re-render
  * @returns React component rendering interactable map and all interactble elements in it
  */
-function Map({ mapId }) {
+function Map({ mapId, trigger, onPostCreateSuccess }) {
   //the map takes a second to load from the API to we keep references to it
   //instead of just creating a new object for it
   const mapRef = useRef(null); //references will persist across re-renders of this component
@@ -469,9 +470,12 @@ function Map({ mapId }) {
   useEffect(() => {
     if (!mapInstance) return;
 
-    //wait for the library to be available to use
+    //take the generated bathroom data and add as markers
+    for (const location of DB.getLocationsAll()) {
+      addMarker(location);
+    }
     
-  }, [mapInstance]); //list our map as a dependency that the API can read/write
+  }, [mapInstance, trigger]); //list our map as a dependency that the API can read/write
 
   const onLoad = (map) => {
     mapRef.current = map;
@@ -595,7 +599,7 @@ function Map({ mapId }) {
           const locationData = DB.getLocation(marker.locationID);
           const postData = DB.getPostsForLocation(marker.locationID);
 
-          marker.content = LocationPopUp(locationData, postData);
+          marker.content = LocationPopUp(locationData, postData, onPostCreateSuccess);
           marker.zIndex = 2;
           marker.state = "popup"
 
@@ -664,11 +668,6 @@ function Map({ mapId }) {
     }
   }
 
-  //take the generated bathroom data and add as markers
-  for (const location of DB.getLocationsAll()) {
-    addMarker(location);
-  }
-
   // https://stackoverflow.com/questions/7950030/can-i-remove-just-the-popup-bubbles-of-pois-in-google-maps-api-v3
   // Here we redefine the set() method.
   //   If it is called for map option, we hide the InfoWindow, if "noSuppress"  
@@ -705,10 +704,10 @@ function Map({ mapId }) {
 
 /**
  * React component form for creating a new Post
- * @param {JSON} props contains { location }, location to make post for
+ * @param {JSON} props contains { location, onSuccess }, location to make post for, callback function to re-render map with new post data
  * @returns React component
  */
-function PostCreateForm( { location }){
+function PostCreateForm( { location, onSuccess }){
   //in theory, when this form appears the locationID is known (because that button triggers this modal)
   //  as well as the accountID (session storage..?)
   const defaultRating = 3;
@@ -723,6 +722,8 @@ function PostCreateForm( { location }){
     e.preventDefault();
     let postID = DB.createPost(location.locationID, accountID, cleanliness, availability, amenities, notes); //TODO: currently we're just choosing a random account/location to post from/about
     
+    onSuccess(); //make the pin re-render
+
     //make a success message appear
     closeModal();
     openBanner(
@@ -810,9 +811,10 @@ function PostCreateForm( { location }){
 
 /**
  * React component form for creating a new Location
+ * @param {JSON} props contains { onSuccess }, callback function to re-render map with new location
  * @returns React component
  */
-function LocationCreateForm(){
+function LocationCreateForm( { onSuccess } ){
 
   const maxNameLength = 30;
 
@@ -823,7 +825,13 @@ function LocationCreateForm(){
   function handleSubmit(e) {
     e.preventDefault();
 
-    let locationID = DB.createLocation(name, gender, location.lat, location.lng);
+    const latitude = parseFloat(location.lat.toFixed(4));
+    const longitude = parseFloat(location.lng.toFixed(4));
+
+
+    let locationID = DB.createLocation(name, gender, latitude, longitude);
+
+    onSuccess(); //trigger the map to re-render
     
     //make a success message appear
     closeModal();
@@ -946,6 +954,10 @@ function AboutText(){
  */
 export default function App() {
 
+  //we will simply toggle this trigger whenever we want our Map to re-render our
+  //markers. specifically when a post or location is created
+  const [trigger, setTrigger] = useState(true);
+
   //asynchronously trigger so it runs after the App renders
   setTimeout( () => {
     if (!login){
@@ -971,7 +983,7 @@ export default function App() {
               libraries={["marker"]}
               mapIds={[privateMapID]}
             >
-              <LocationCreateForm />
+              <LocationCreateForm onSuccess={() => setTrigger(t => !t)} />
             </LoadScriptNext>
           );
         }} content={
@@ -988,7 +1000,7 @@ export default function App() {
         libraries={["marker"]} //load marker library
         mapIds={[privateMapID]}
       >
-        <Map mapId={privateMapID} />
+        <Map mapId={privateMapID} trigger={trigger} onPostCreateSuccess={ () => setTrigger(t => !t) } />
       </LoadScriptNext>
     </div>
   </>;
