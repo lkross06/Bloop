@@ -25,10 +25,19 @@ const minimumZoom = 11.5; //how far you can zoom out (1 = world view, 18 = stree
 const maximumZoom = 16.5; //how far you can zoom in
 const defaultZoom = 15.5;
 
+//for the create location map
+const minimumZoomSmall = 11.5;
+const maximumZoomSmall = 16.9; //at 17, more labels are shown that would overcrowd the space
+const defaultZoomSmall = 16.5
+
 const containerStyle = {
   width: "100%", //fill entire map-container div
   height: "100%",
 };
+const containerStyleSmall = {
+  width: "100%",
+  height: "15rem"
+}
 
 /**
  * Styles a pin's based on the average rating for a singular location
@@ -242,7 +251,7 @@ function openModal(modalContent){
  */
 function LocationPopUp(location, posts) {
   function createPostModal(){
-    //open a post-create form with this modal
+    //open a create form with this modal
     openModal(
       <PostCreateForm location={location} />
     );
@@ -319,6 +328,116 @@ function LocationPopUp(location, posts) {
 }
 
 /**
+ * 
+ * @param {*} param0 
+ * @returns 
+ */
+function MapSmall({ mapId, updateParentLocation }) {
+  //the map takes a second to load from the API to we keep references to it
+  //instead of just creating a new object for it
+  const mapRef = useRef(null); //references will persist across re-renders of this component
+  const [mapInstance, setMapInstance] = useState(null);
+  const [activeMarker, setActiveMarker] = useState(null);
+
+  //we need React's useEffect to stay connected with external
+  //systems (in this case our API)
+  useEffect(() => {
+    if (!mapInstance) return;
+
+    //wait for the library to be available to use
+    
+  }, [mapInstance]); //list our map as a dependency that the API can read/write
+
+  const onLoad = (map) => {
+    mapRef.current = map;
+    setMapInstance(map);
+  };
+
+  //NOTE: choosing to use JS objects instead of React objects (<AdvancedMarker... />) since this is more of a
+  //"back end" endeavor and easy communication with other external services isn't guranteed if we use React objects.
+  //So the only React object is the map, which handles everything.
+
+  /**
+   * Asynchronously load JS object (Marker) to render on Google Maps Map React component.
+   * See notes below
+   * @param {JSON} location JSON containing Location data
+   */
+  async function updateMarker(location){
+    const { AdvancedMarkerElement } = await google.maps.importLibrary("marker"); //the asynchronous part comes in here
+
+    try {
+      if (activeMarker != null){
+        activeMarker.map = null; //dereference from map so we can make a new one
+        setActiveMarker(null);
+      }
+
+      //make the actual element
+      const marker = new AdvancedMarkerElement({position: {lat: location.lat, lng: location.lng}, map: mapInstance}); //add the graphics and map
+
+      marker.zIndex = 1;
+      setActiveMarker(marker);
+
+      //now pan this map to the location
+      mapInstance.panTo({
+        lat: marker.position.lat,
+        lng: marker.position.lng
+      });
+      mapInstance.setZoom(maximumZoomSmall);
+
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // https://stackoverflow.com/questions/7950030/can-i-remove-just-the-popup-bubbles-of-pois-in-google-maps-api-v3
+  // Here we redefine the set() method.
+  //   If it is called for map option, we hide the InfoWindow, if "noSuppress"  
+  //   option is not true. As Google Maps does not know about this option,  
+  //   its InfoWindows will not be opened.
+  var set = google.maps.InfoWindow.prototype.set;
+
+  google.maps.InfoWindow.prototype.set = function (key, val) {
+      if (key === 'map' && ! this.get('noSuppress')) return;
+
+      set.apply(this, arguments); //disable pop-ups whenever you select a known POI
+  }
+
+  return (
+    <GoogleMap
+      mapContainerStyle={containerStyleSmall}
+      center={
+        //for some reason the LoadScript is reloading here every time, so if we already placed a marker pan there instead
+        (activeMarker == null)?
+        { lat: mapStartCoords.lat, lng: mapStartCoords.lng } :
+        {
+          lat: activeMarker.position.lat,
+          lng: activeMarker.position.lng
+        }
+      }
+      zoom={defaultZoomSmall} //let's show all of LA for now
+      onLoad={onLoad}
+      onClick={(e) => {
+        const location = {
+          lat: e.latLng.lat(),
+          lng: e.latLng.lng()
+        }
+
+        updateMarker(location);
+        updateParentLocation(location); //tell the parent component (form) what the user's new location passed in is
+      }}
+      options={{
+        mapId,
+        disableDefaultUI: true,
+        minZoom: minimumZoomSmall,   
+        maxZoom: maximumZoomSmall, 
+      }} //disable default buttons (fullscreen, street view, etc.)
+    >
+      {/* empty children since we create marker via API */}
+    </GoogleMap>
+  );
+}
+
+/**
  * React Map component for rendering Google Maps interactable map, along with all things rendered in it 
  * @param {JSON} props Takes { mapID }, private map ID
  * @returns React component rendering interactable map and all interactble elements in it
@@ -355,8 +474,6 @@ function Map({ mapId }) {
     //geolocation is available
     navigator.geolocation.watchPosition(
       (position) => { /* SUCCESS CALLBACK FUNCTION */
-        console.log(position.coords);
-
         updateDeviceMarker({
           lat: position.coords.latitude,
           lng: position.coords.longitude
@@ -414,16 +531,21 @@ function Map({ mapId }) {
 
       marker.zIndex = 2; //draw above any location markers
 
+      google.maps.event.addListener(marker, "click", () => {
+        mapInstance.panTo(position);
+        mapInstance.setZoom(maximumZoom); //zoom into the user's position
+      });
+
       if (activeDeviceMarker == null) {
         //if this is our first time loading the page, pan to the user's location
         mapInstance.panTo(position);
-        mapInstance.setZoom((maximumZoom + defaultZoom) / 2); //zoom into the user's position while leaving peripherals availabile
+        mapInstance.setZoom(maximumZoom); //zoom into the user's position
       }
 
       activeDeviceMarker = marker;
 
-    } catch (e) {
-      console.error(e);
+    } catch {
+      //position was probably null we don't really care
     }
   }
 
@@ -602,20 +724,20 @@ function PostCreateForm( { location }){
   };
 
   return (
-    <form onSubmit={handleSubmit} className="post-create-form">
+    <form onSubmit={handleSubmit} className="create-form">
       <span className="modal-header">
         <h3>{location.title}</h3>
-        <h4 className="post-create-form-rating"><StarRating rating={
+        <h4 className="create-form-rating"><StarRating rating={
           (cleanliness + amenities + availability) / 3
         } /></h4>
       </span>
 
-      <div className="post-create-form-group">
-        <label htmlFor="cleanliness" className="post-create-form-label">Cleanliness <span className="required-asterisk">*</span></label>
+      <div className="create-form-group">
+        <label htmlFor="cleanliness" className="create-form-label">Cleanliness <span className="required-asterisk">*</span></label>
         <input
           type="range"
           id="cleanliness"
-          className="post-create-form-slider"
+          className="create-form-slider"
           min="0"
           max="5"
           step="0.01"
@@ -626,12 +748,12 @@ function PostCreateForm( { location }){
         <span className="slider-value">{Math.round(cleanliness)}</span>
       </div>
 
-      <div className="post-create-form-group">
-        <label htmlFor="availability" className="post-create-form-label">Availability <span className="required-asterisk">*</span></label>
+      <div className="create-form-group">
+        <label htmlFor="availability" className="create-form-label">Availability <span className="required-asterisk">*</span></label>
         <input
           type="range"
           id="availability"
-          className="post-create-form-slider"
+          className="create-form-slider"
           min="0"
           max="5"
           step="0.01"
@@ -642,12 +764,12 @@ function PostCreateForm( { location }){
         <span className="slider-value">{Math.round(availability)}</span>
       </div>
 
-      <div className="post-create-form-group">
-        <label htmlFor="amenities" className="post-create-form-label">Amenities <span className="required-asterisk">*</span></label>
+      <div className="create-form-group">
+        <label htmlFor="amenities" className="create-form-label">Amenities <span className="required-asterisk">*</span></label>
         <input
           type="range"
           id="amenities"
-          className="post-create-form-slider"
+          className="create-form-slider"
           min="0"
           max="5"
           step="0.01"
@@ -658,11 +780,11 @@ function PostCreateForm( { location }){
         <span className="slider-value">{Math.round(amenities)}</span>
       </div>
 
-      <div className="post-create-form-group">
-        <label htmlFor="notes" className="post-create-form-label">Notes</label>
+      <div className="create-form-group">
+        <label htmlFor="notes" className="create-form-label">Notes</label>
         <textarea
           id="notes"
-          className="post-create-form-textarea"
+          className="create-form-textarea"
           maxLength={maxNotesLength}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -671,7 +793,117 @@ function PostCreateForm( { location }){
         <span className="slider-value">{notes.length} / {maxNotesLength}</span>
       </div>
 
-      <button type="submit" className="post-create-form-submit">Create Post</button>
+      <button type="submit" className="create-form-submit">Create Post</button>
+    </form>
+  );
+}
+
+/**
+ * React component form for creating a new Location
+ * @returns React component
+ */
+function LocationCreateForm(){
+
+  const maxNameLength = 30;
+
+  const [name, setName] = useState("");
+  const [gender, setGender] = useState("");
+  const [location, setLocation] = useState(null);
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    
+    console.log(name)
+    console.log(gender)
+    console.log(location)
+
+    let locationID = DB.createLocation(name, gender, location.lat, location.lng);
+    
+    //make a success message appear
+    closeModal();
+    openBanner(
+      "create-" + String(locationID),
+      <p>Location created successfully!</p>,
+      "mediumseagreen",
+      5000
+    );
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="create-form">
+      <span className="modal-header">
+        <h3>Add a New Bathroom</h3>
+      </span>
+
+      <div className="create-form-group">
+        <label htmlFor="name" className="create-form-label">Name <span className="required-asterisk">*</span></label>
+        <input
+          type="text"
+          id="name"
+          className="create-form-text"
+          maxLength={maxNameLength}
+          placeholder="Boelter Hall, 4th Floor"
+          onChange={(e) => { setName(e.target.value); } }
+          required
+        />
+        <span className="slider-value">{name.length} / {maxNameLength}</span>
+      </div>
+
+      <div className="create-form-group">
+        <label className="create-form-label">Gender <span className="required-asterisk">*</span></label>
+
+        <div className="gender-radio-row">
+          <label className="gender-option">
+            <input
+              type="radio"
+              name="gender"
+              id="M"
+              value="M"
+              checked={gender === "M"}
+              onChange={(e) => setGender(e.target.value)}
+              required
+            />
+            <span>Male</span>
+          </label>
+
+          <label className="gender-option">
+            <input
+              type="radio"
+              name="gender"
+              id="F"
+              value="F"
+              checked={gender === "F"}
+              onChange={(e) => setGender(e.target.value)}
+              required
+            />
+            <span>Female</span>
+          </label>
+
+          <label className="gender-option">
+            <input
+              type="radio"
+              name="gender"
+              id="N"
+              value="N"
+              checked={gender === "N"}
+              onChange={(e) => setGender(e.target.value)}
+              required
+            />
+            <span>Gender-inclusive</span>
+          </label>
+        </div>
+      </div>
+
+      <div className="create-form-group">
+        <label className="create-form-label">Location <span className="required-asterisk">*</span></label>
+        <div>
+          {/* make another map to render */}
+          {/* NOTE: we load LoadScript outside the updating react component */}
+          <MapSmall mapId={privateMapID} updateParentLocation={(location) => { setLocation(location); }  } />
+        </div>
+      </div>
+
+      <button type="submit" className="create-form-submit">Create Location</button>
     </form>
   );
 }
@@ -721,10 +953,20 @@ export default function App() {
     <div className="overlay">
       <h1 id="app-title" className="overlay">bloop</h1>
       <span className="overlay-buttons">
-        <OverlayButton onClick={() => {console.log("test"); }} content={
+        <OverlayButton onClick={() => {
+          openModal(
+            <LoadScriptNext 
+              googleMapsApiKey={privateApiKey}
+              libraries={["marker"]}
+              mapIds={[privateMapID]}
+            >
+              <LocationCreateForm />
+            </LoadScriptNext>
+          );
+        }} content={
           <p>＋</p>
         } />
-        <OverlayButton onClick={() => { openModal(AboutText()); }} content={
+        <OverlayButton onClick={() => { openModal(<AboutText />); }} content={
           <p>?</p>
         } />
       </span>

@@ -262,7 +262,7 @@ body {
 }
 
 /* create post button */
-.location-popup-button, .post-create-form-submit {
+.location-popup-button, .create-form-submit {
   grid-column: 1 / 3;
   padding: 0.75rem 1rem;
   font-size: 1rem;
@@ -275,7 +275,7 @@ body {
   transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-.location-popup-button:hover, .post-create-form-submit:hover {
+.location-popup-button:hover, .create-form-submit:hover {
   background-color: var(--col-primary-dark);
 }
 
@@ -307,7 +307,7 @@ body {
 
 /* ------- CREATE POST FORM ------- */
 
-.post-create-form {
+.create-form {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -318,22 +318,22 @@ body {
   font-size: 1rem;
 }
 
-.post-create-form-rating {
+.create-form-rating {
   font-size: 3rem;
   margin-top: 1rem;
 }
 
-.post-create-form-group {
+.create-form-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.post-create-form-label {
+.create-form-label {
   font-weight: 500;
 }
 
-.post-create-form-slider {
+.create-form-slider {
   width: 100%;
   accent-color: var(--col-primary-dark);
 }
@@ -343,11 +343,20 @@ body {
   color: var(--col-text-secondary);
 }
 
-.post-create-form-textarea {
+.create-form-textarea {
   resize: none;
   min-height: 80px;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--col-text-secondary);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.create-form-text {
+  height: 60px;
+  padding: 0 0.5rem;
+  border: 1px solid var(--col-text-secondary);
   border-radius: 8px;
   font-family: inherit;
   font-size: 1rem;
@@ -356,5 +365,59 @@ body {
 .required-asterisk {
   color: var(--col-failure);
   font-weight: 500;
+}
+
+.gender-radio-row {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  place-items: center;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.gender-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1.2rem;
+}
+
+.gender-option span {
+  padding: 0.5rem 1.8rem;
+  border-radius: 2rem;
+
+  /* fade-in animation */
+  transition: 
+    background-color 0.3s ease,
+    color 0.3s ease,
+    opacity 0.3s ease;
+  opacity: 0.7;
+}
+
+.gender-option input{
+  display:none;
+}
+
+/* the label for the radio button */
+.gender-option input:checked ~ span {
+  background-color: var(--col-primary);
+  color: var(--col-secondary);
+}
+
+.gender-option input#M:checked ~ span {
+  background-color: var(--col-male);
+  color: var(--col-secondary);
+  opacity: 1;
+}
+
+.gender-option input#F:checked ~ span {
+  background-color: var(--col-female);
+  color: var(--col-secondary);
+  opacity: 1;
+}
+.gender-option input#N:checked ~ span {
+  background-color: var(--col-non-binary);
+  color: var(--col-secondary);
+  opacity: 1;
 }
 

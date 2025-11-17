@@ -37,6 +37,43 @@ class DBHandler {
     return this.locations[String(locationID)] || null;
   }
 
+  /**
+   * Create a new location
+   * @param {*} title title of location
+   * @param {*} gender gender (male/female/gender-inclusive) of location
+   * @param {*} lat latitude coords
+   * @param {*} lng longitude coords
+   * @returns locationID if successful, null otherwise
+   */
+  createLocation(title, gender, lat, lng){
+    try {
+      const id = DBHandler.#generateUniqueID();
+
+      if (gender == "male"){
+        gender = "M"
+      } else if (gender == "female"){
+        gender = "F"
+      } else {
+        gender = "N"
+      }
+
+      let location = {
+        locationID: id,
+        title: title,
+        lat: Number(lat),
+        lng: Number(lng),
+        posts: [],
+        gender: gender
+      }
+
+      this.locations[id] = location;
+
+      return id;
+    } catch (e) {
+      return null;
+    }
+  }
+
   /** ------- POST DATA ------ */
 
   /**
