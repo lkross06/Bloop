@@ -328,9 +328,10 @@ function LocationPopUp(location, posts) {
 }
 
 /**
- * 
- * @param {*} param0 
- * @returns 
+ * Smaller interactable Google Maps React component for Location create form
+ * to select where to add new location
+ * @param {JSON} props contains { mapId, updateParentLocation }, private map ID and callback function to parent to update location selected
+ * @returns React component
  */
 function MapSmall({ mapId, updateParentLocation }) {
   //the map takes a second to load from the API to we keep references to it
@@ -339,23 +340,27 @@ function MapSmall({ mapId, updateParentLocation }) {
   const [mapInstance, setMapInstance] = useState(null);
   const [activeMarker, setActiveMarker] = useState(null);
 
+  const [center, setCenter] = useState({
+    lat: mapStartCoords.lat,
+    lng: mapStartCoords.lng
+  });
+
   //we need React's useEffect to stay connected with external
   //systems (in this case our API)
   useEffect(() => {
     if (!mapInstance) return;
 
-    //wait for the library to be available to use
-    
-  }, [mapInstance]); //list our map as a dependency that the API can read/write
+     if (activeMarker != null) setCenter({
+      lat: activeMarker.position.lat,
+      lng: activeMarker.position.lng
+     });
+
+  }, [mapInstance, activeMarker]); //list our map as a dependency that the API can read/write
 
   const onLoad = (map) => {
     mapRef.current = map;
     setMapInstance(map);
   };
-
-  //NOTE: choosing to use JS objects instead of React objects (<AdvancedMarker... />) since this is more of a
-  //"back end" endeavor and easy communication with other external services isn't guranteed if we use React objects.
-  //So the only React object is the map, which handles everything.
 
   /**
    * Asynchronously load JS object (Marker) to render on Google Maps Map React component.
@@ -389,11 +394,7 @@ function MapSmall({ mapId, updateParentLocation }) {
     }
   }
 
-  // https://stackoverflow.com/questions/7950030/can-i-remove-just-the-popup-bubbles-of-pois-in-google-maps-api-v3
-  // Here we redefine the set() method.
-  //   If it is called for map option, we hide the InfoWindow, if "noSuppress"  
-  //   option is not true. As Google Maps does not know about this option,  
-  //   its InfoWindows will not be opened.
+  //see my note on this below
   var set = google.maps.InfoWindow.prototype.set;
 
   google.maps.InfoWindow.prototype.set = function (key, val) {
@@ -405,15 +406,7 @@ function MapSmall({ mapId, updateParentLocation }) {
   return (
     <GoogleMap
       mapContainerStyle={containerStyleSmall}
-      center={
-        //for some reason the LoadScript is reloading here every time, so if we already placed a marker pan there instead
-        (activeMarker == null)?
-        { lat: mapStartCoords.lat, lng: mapStartCoords.lng } :
-        {
-          lat: activeMarker.position.lat,
-          lng: activeMarker.position.lng
-        }
-      }
+      center={center}
       zoom={defaultZoomSmall} //let's show all of LA for now
       onLoad={onLoad}
       onClick={(e) => {
@@ -449,19 +442,37 @@ function Map({ mapId }) {
   const [mapInstance, setMapInstance] = useState(null);
 
   //currently selected marker with a pop-up
-  let activeMarker = null;
-  
+  const [activeMarker, setActiveMarker] = useState(null);
   //also keep track of the currently drawn device marker
-  let activeDeviceMarker = null;
+  const [activeDeviceMarker, setActiveDeviceMarker] = useState(null);
+
+  const [center, setCenter] = useState({
+    lat: mapStartCoords.lat,
+    lng: mapStartCoords.lng
+  });
+  const [zoom, setZoom] = useState(defaultZoom);
 
   //we need React's useEffect to stay connected with external
   //systems (in this case our API)
   useEffect(() => {
     if (!mapInstance) return;
 
-    //wait for the library to be available to use
-    
-  }, [mapInstance]); //list our map as a dependency that the API can read/write
+    //take the generated bathroom data and add as markers
+    for (const location of DB.getLocationsAll()) {
+      addMarker(location);
+    }
+
+    if (activeMarker != null) {
+      //when a pop-up is shown, pan the map over to center on that location
+      //and offset by 0.003° N so that the large location pop-up is centered
+      setZoom(maximumZoom);
+      setCenter({
+        lat: activeMarker.position.lat + 0.003, //go slighlty above where the marker is, so the full pop-up is shown
+        lng: activeMarker.position.lng
+      });
+    }
+
+  }, [mapInstance, activeMarker]); //list our map as a dependency that the API can read/write
 
   const onLoad = (map) => {
     mapRef.current = map;
@@ -482,17 +493,12 @@ function Map({ mapId }) {
     );
   } else {
     //gelocation is not available
-    //we don't really have to do anything
-  }
-
-  //NOTE: choosing to use JS objects instead of React objects (<AdvancedMarker... />) since this is more of a
-  //"back end" endeavor and easy communication with other external services isn't guranteed if we use React objects.
-  //So the only React object is the map, which handles everything.
+    //we don't really have to do anything... this is an optional feature
+  } 
 
   /**
    * Asynchronously load JS object (Marker) that updates whenever Navigator API asynchronously updates
    * device's current GPS position
-   * 
    * @param {*} position contaings {lat, lng} to updated AdvancedMarkerElement
    */
   async function updateDeviceMarker(position){
@@ -542,7 +548,7 @@ function Map({ mapId }) {
         mapInstance.setZoom(maximumZoom); //zoom into the user's position
       }
 
-      activeDeviceMarker = marker;
+      setActiveDeviceMarker(marker);
 
     } catch {
       //position was probably null we don't really care
@@ -566,10 +572,10 @@ function Map({ mapId }) {
       if (marker.state == "pin"){
         closeMarkerPopup(activeMarker);
         openMarkerPopup(marker);
-        activeMarker = marker;
+        setActiveMarker(marker);
       } else {
         closeMarkerPopup(marker);
-        activeMarker = null;
+        setActiveMarker(null);
       }
     }
 
@@ -579,7 +585,6 @@ function Map({ mapId }) {
      * @returns true if successful, false otherwise
      */
     function openMarkerPopup(marker){
-      if (marker == null) return;
 
       try {
           const locationData = DB.getLocation(marker.locationID);
@@ -588,11 +593,7 @@ function Map({ mapId }) {
           marker.content = LocationPopUp(locationData, postData);
           marker.zIndex = 2;
           marker.state = "popup"
-
-          //when a pop-up is shown, pan the map over to center on that location
-          //and offset by 0.003° N so that the large location pop-up is centered
-          mapInstance.panTo({lat: marker.position.lat + 0.003, lng: marker.position.lng});
-
+          
           return true
       } catch (e) {
         console.error(e);
@@ -625,7 +626,6 @@ function Map({ mapId }) {
     const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker"); //the asynchronous part comes in here
 
     try {
-
       //first try to load all of the posts related to this location
       //if we store this information with the React component we get around having to keep polling the DBMS
       let posts = []
@@ -654,11 +654,6 @@ function Map({ mapId }) {
     }
   }
 
-  //take the generated bathroom data and add as markers
-  for (const location of DB.getLocationsAll()) {
-    addMarker(location);
-  }
-
   // https://stackoverflow.com/questions/7950030/can-i-remove-just-the-popup-bubbles-of-pois-in-google-maps-api-v3
   // Here we redefine the set() method.
   //   If it is called for map option, we hide the InfoWindow, if "noSuppress"  
@@ -675,11 +670,8 @@ function Map({ mapId }) {
   return (
     <GoogleMap
       mapContainerStyle={containerStyle}
-      center={{
-        lat: mapStartCoords.lat,
-        lng: mapStartCoords.lng
-      }}
-      zoom={defaultZoom} //let's show all of LA for now
+      center={center}
+      zoom={zoom}
       onLoad={onLoad}
       options={{
         mapId,
@@ -703,6 +695,7 @@ function PostCreateForm( { location }){
   //  as well as the accountID (session storage..?)
   const defaultRating = 3;
   const maxNotesLength = 150;
+  const sliderStep = 0.01;
 
   const [cleanliness, setCleanliness] = useState(defaultRating);
   const [availability, setAvailability] = useState(defaultRating);
@@ -740,7 +733,7 @@ function PostCreateForm( { location }){
           className="create-form-slider"
           min="0"
           max="5"
-          step="0.01"
+          step={String(sliderStep)}
           value={cleanliness}
           onChange={(e) => setCleanliness(Number(e.target.value))}
           required
@@ -756,7 +749,7 @@ function PostCreateForm( { location }){
           className="create-form-slider"
           min="0"
           max="5"
-          step="0.01"
+          step={String(sliderStep)}
           value={availability}
           onChange={(e) => setAvailability(Number(e.target.value))}
           required
@@ -772,7 +765,7 @@ function PostCreateForm( { location }){
           className="create-form-slider"
           min="0"
           max="5"
-          step="0.01"
+          step={String(sliderStep)}
           value={amenities}
           onChange={(e) => setAmenities(Number(e.target.value))}
           required
