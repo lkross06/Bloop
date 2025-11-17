@@ -448,6 +448,16 @@ function Map({ mapId }) {
   const mapRef = useRef(null); //references will persist across re-renders of this component
   const [mapInstance, setMapInstance] = useState(null);
 
+  /**
+   * Justification for using local variables instead of React states
+   * 
+   * Using React states requires setting the <GoogleMap /> properties on
+   * every update, which makes panning from marker to marker very choppy
+   * since panTo does not work. Using local variables means its harder to
+   * track this state across React components, however callback functions
+   * can get around this problem.
+   */
+
   //currently selected marker with a pop-up
   let activeMarker = null;
   
