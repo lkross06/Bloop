@@ -425,7 +425,7 @@ function MapSmall({ mapId, updateParentLocation }) {
  * @param {JSON} props Takes { mapId, trigger, onPostCreateSuccess }-- private Map ID, trigger variable to watch --> re-render markers, and callback function to trigger re-render
  * @returns React component rendering interactable map and all interactble elements in it
  */
-function Map({ mapId, trigger, onPostCreateSuccess, deviceLocation }) {
+function Map({ mapId, trigger, setTrigger, onPostCreateSuccess, deviceLocation }) {
   //the map takes a second to load from the API to we keep references to it
   //instead of just creating a new object for it
   const mapRef = useRef(null); //references will persist across re-renders of this component
@@ -457,7 +457,7 @@ function Map({ mapId, trigger, onPostCreateSuccess, deviceLocation }) {
   }, [mapInstance]);
 
   useEffect(() => {
-    if (mapInstance == null) return;
+    if (mapInstance == null || trigger == null) return;
 
     /* HERE WE EXPECT TRIGGER = LOCATION ID TO UPDATE */
 
@@ -469,6 +469,8 @@ function Map({ mapId, trigger, onPostCreateSuccess, deviceLocation }) {
 
     const location = DB.getLocation(trigger);
     if (location != null) addMarker(location);
+
+    setTrigger(null);
 
   }, [trigger]);
 
@@ -1015,7 +1017,7 @@ export default function App() {
               libraries={GOOGLE_LIBRARIES}
               mapIds={[privateMapID]}
             >
-              <LocationCreateForm onSuccess={(locationID) => setTrigger(locationID)} deviceLocation={deviceLocation} />
+              <LocationCreateForm onSuccess={ (locationID) => setTrigger(locationID) } deviceLocation={deviceLocation} />
             </LoadScriptNext>
           );
         }} content={
@@ -1032,7 +1034,7 @@ export default function App() {
         libraries={GOOGLE_LIBRARIES} //load marker library
         mapIds={[privateMapID]}
       >
-        <Map mapId={privateMapID} trigger={trigger} onPostCreateSuccess={ (locationID) => setTrigger(locationID) } deviceLocation={deviceLocation} />
+        <Map mapId={privateMapID} trigger={trigger} setTrigger={setTrigger} onPostCreateSuccess={ (locationID) => setTrigger(locationID) } deviceLocation={deviceLocation} />
       </LoadScriptNext>
     </div>
   </>;
