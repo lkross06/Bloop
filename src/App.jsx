@@ -2,8 +2,9 @@ import { useRef, useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
-import DBHandler from "./DBHandler"
+const GOOGLE_LIBRARIES = ["marker"];
 
+import DBHandler from "./DBHandler"
 const DB = new DBHandler();
 
 //TODO: REPLACE WITH SESSION DATA
@@ -38,6 +39,9 @@ const containerStyleSmall = {
   width: "100%",
   height: "15rem"
 }
+
+//how many seconds to wait before pinging again for new location
+const geolocationPingTimeout = 3;
 
 /**
  * Styles a pin's based on the average rating for a singular location
@@ -340,15 +344,6 @@ function MapSmall({ mapId, updateParentLocation }) {
   const [mapInstance, setMapInstance] = useState(null);
   const [activeMarker, setActiveMarker] = useState(null);
 
-  //we need React's useEffect to stay connected with external
-  //systems (in this case our API)
-  useEffect(() => {
-    if (!mapInstance) return;
-
-    //wait for the library to be available to use
-    
-  }, [mapInstance]); //list our map as a dependency that the API can read/write
-
   const onLoad = (map) => {
     mapRef.current = map;
     setMapInstance(map);
@@ -388,19 +383,6 @@ function MapSmall({ mapId, updateParentLocation }) {
     } catch (e) {
       console.error(e);
     }
-  }
-
-  // https://stackoverflow.com/questions/7950030/can-i-remove-just-the-popup-bubbles-of-pois-in-google-maps-api-v3
-  // Here we redefine the set() method.
-  //   If it is called for map option, we hide the InfoWindow, if "noSuppress"  
-  //   option is not true. As Google Maps does not know about this option,  
-  //   its InfoWindows will not be opened.
-  var set = google.maps.InfoWindow.prototype.set;
-
-  google.maps.InfoWindow.prototype.set = function (key, val) {
-      if (key === 'map' && ! this.get('noSuppress')) return;
-
-      set.apply(this, arguments); //disable pop-ups whenever you select a known POI
   }
 
   return (
@@ -443,61 +425,65 @@ function MapSmall({ mapId, updateParentLocation }) {
  * @param {JSON} props Takes { mapId, trigger, onPostCreateSuccess }-- private Map ID, trigger variable to watch --> re-render markers, and callback function to trigger re-render
  * @returns React component rendering interactable map and all interactble elements in it
  */
-function Map({ mapId, trigger, onPostCreateSuccess }) {
+function Map({ mapId, trigger, onPostCreateSuccess, deviceLocation }) {
   //the map takes a second to load from the API to we keep references to it
   //instead of just creating a new object for it
   const mapRef = useRef(null); //references will persist across re-renders of this component
   const [mapInstance, setMapInstance] = useState(null);
 
-  /**
-   * Justification for using local variables instead of React states
-   * 
-   * Using React states requires setting the <GoogleMap /> properties on
-   * every update, which makes panning from marker to marker very choppy
-   * since panTo does not work. Using local variables means its harder to
-   * track this state across React components, however callback functions
-   * can get around this problem.
-   */
-
   //currently selected marker with a pop-up
-  let activeMarker = null;
+  const [activeMarker, setActiveMarker] = useState(null);
+  const markersDict = useRef({}); //stores by locationID : AdvancedMarkerElement
   
   //also keep track of the currently drawn device marker
-  let activeDeviceMarker = null;
+  const [activeDeviceMarker, setActiveDeviceMarker] = useState(null);
 
   //we need React's useEffect to stay connected with external
   //systems (in this case our API)
-  useEffect(() => {
-    if (!mapInstance) return;
 
-    //take the generated bathroom data and add as markers
+  useEffect(() => {
+    if (mapInstance == null) return;
+
+    //delete any existing markers
+    Object.keys(markersDict.current).forEach(key => {
+      markersDict.current[key].setMap(null);
+      delete markersDict.current[key];
+    });
+    
+    //draw all new markers
     for (const location of DB.getLocationsAll()) {
       addMarker(location);
     }
-    
-  }, [mapInstance, trigger]); //list our map as a dependency that the API can read/write
+  }, [mapInstance]);
+
+  useEffect(() => {
+    if (mapInstance == null) return;
+
+    /* HERE WE EXPECT TRIGGER = LOCATION ID TO UPDATE */
+
+    //remove the one that needs to be updated
+    if (markersDict.current[trigger] != null){
+      markersDict.current[trigger].setMap(null);
+      delete markersDict.current[trigger];
+    }
+
+    const location = DB.getLocation(trigger);
+    if (location != null) addMarker(location);
+
+  }, [trigger]);
+
+  useEffect(() => {
+    //App component's API connection receives something
+    if (mapInstance == null || deviceLocation == null) return;    
+
+    updateDeviceMarker(deviceLocation);
+
+  }, [deviceLocation]); //when the device's location updates, App sends a ping here
 
   const onLoad = (map) => {
     mapRef.current = map;
     setMapInstance(map);
   };
-
-  //window has a built-in location tracker as an asynchronous API
-  //  that pings when it finds the laptop's GPS coordinates
-  if ("geolocation" in navigator) {
-    //geolocation is available
-    navigator.geolocation.watchPosition(
-      (position) => { /* SUCCESS CALLBACK FUNCTION */
-        updateDeviceMarker({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        });
-      }
-    );
-  } else {
-    //gelocation is not available
-    //we don't really have to do anything
-  }
 
   //NOTE: choosing to use JS objects instead of React objects (<AdvancedMarker... />) since this is more of a
   //"back end" endeavor and easy communication with other external services isn't guranteed if we use React objects.
@@ -510,11 +496,6 @@ function Map({ mapId, trigger, onPostCreateSuccess }) {
    * @param {*} position contaings {lat, lng} to updated AdvancedMarkerElement
    */
   async function updateDeviceMarker(position){
-    //first delete the currently drawn marker if there is one
-    if (activeDeviceMarker != null){
-      activeDeviceMarker.map = null; //dereference from map
-    }
-
     const { AdvancedMarkerElement } = await google.maps.importLibrary("marker"); //the asynchronous part comes in here
 
     try {
@@ -543,7 +524,7 @@ function Map({ mapId, trigger, onPostCreateSuccess }) {
         });
       marker.append(svg);
 
-      marker.zIndex = 2; //draw above any location markers
+      marker.zIndex = 2; //draw above any location markers, but not above location marker pop-ups
 
       google.maps.event.addListener(marker, "click", () => {
         mapInstance.panTo(position);
@@ -554,9 +535,12 @@ function Map({ mapId, trigger, onPostCreateSuccess }) {
         //if this is our first time loading the page, pan to the user's location
         mapInstance.panTo(position);
         mapInstance.setZoom(maximumZoom); //zoom into the user's position
+      } else {
+        //delete the currently drawn marker if there is one
+        activeDeviceMarker.setMap(null); //dereference from map
       }
 
-      activeDeviceMarker = marker;
+      setActiveDeviceMarker(marker);
 
     } catch {
       //position was probably null we don't really care
@@ -580,10 +564,10 @@ function Map({ mapId, trigger, onPostCreateSuccess }) {
       if (marker.state == "pin"){
         closeMarkerPopup(activeMarker);
         openMarkerPopup(marker);
-        activeMarker = marker;
+        setActiveMarker(marker);
       } else {
         closeMarkerPopup(marker);
-        activeMarker = null;
+        setActiveMarker(null);
       }
     }
 
@@ -599,13 +583,13 @@ function Map({ mapId, trigger, onPostCreateSuccess }) {
           const locationData = DB.getLocation(marker.locationID);
           const postData = DB.getPostsForLocation(marker.locationID);
 
-          marker.content = LocationPopUp(locationData, postData, () => {
+          marker.content = LocationPopUp(locationData, postData, (locationID) => {
             //edit the callback function slightly so that the map 
             //  stays centered on wherever the post was just made
-            onPostCreateSuccess();
+            onPostCreateSuccess(locationID);
             mapInstance.panTo({lat: marker.position.lat + 0.003, lng: marker.position.lng})
           });
-          marker.zIndex = 2;
+          marker.zIndex = 3;
           marker.state = "popup"
 
           //when a pop-up is shown, pan the map over to center on that location
@@ -668,22 +652,11 @@ function Map({ mapId, trigger, onPostCreateSuccess }) {
       
       google.maps.event.addListener(marker, "click", () => { handleMarkerClick(marker); });
 
+      markersDict.current[location.locationID] = marker;
+
     } catch (e) {
       console.error(e);
     }
-  }
-
-  // https://stackoverflow.com/questions/7950030/can-i-remove-just-the-popup-bubbles-of-pois-in-google-maps-api-v3
-  // Here we redefine the set() method.
-  //   If it is called for map option, we hide the InfoWindow, if "noSuppress"  
-  //   option is not true. As Google Maps does not know about this option,  
-  //   its InfoWindows will not be opened.
-  var set = google.maps.InfoWindow.prototype.set;
-
-  google.maps.InfoWindow.prototype.set = function (key, val) {
-      if (key === 'map' && ! this.get('noSuppress')) return;
-
-      set.apply(this, arguments); //disable pop-ups whenever you select a known POI
   }
 
   return (
@@ -724,7 +697,7 @@ function PostCreateForm( { location, onSuccess }){
     e.preventDefault();
     let postID = DB.createPost(location.locationID, accountID, cleanliness, availability, amenities, notes); //TODO: currently we're just choosing a random account/location to post from/about
     
-    onSuccess(); //make the pin re-render
+    onSuccess(location.locationID); //make the pin re-render
 
     //make a success message appear
     closeModal();
@@ -816,7 +789,7 @@ function PostCreateForm( { location, onSuccess }){
  * @param {JSON} props contains { onSuccess }, callback function to re-render map with new location
  * @returns React component
  */
-function LocationCreateForm( { onSuccess } ){
+function LocationCreateForm( { onSuccess, deviceLocation } ){
 
   const maxNameLength = 30;
 
@@ -833,7 +806,7 @@ function LocationCreateForm( { onSuccess } ){
 
     let locationID = DB.createLocation(name, gender, latitude, longitude);
 
-    onSuccess(); //trigger the map to re-render
+    onSuccess(locationID); //trigger the map to re-render that pin
     
     //make a success message appear
     closeModal();
@@ -915,7 +888,7 @@ function LocationCreateForm( { onSuccess } ){
         <div>
           {/* make another map to render */}
           {/* NOTE: we load LoadScript outside the updating react component */}
-          <MapSmall mapId={privateMapID} updateParentLocation={(location) => { setLocation(location); }  } />
+          <MapSmall mapId={privateMapID} updateParentLocation={(location) => { setLocation(location); } } deviceLocation={deviceLocation} />
         </div>
       </div>
 
@@ -956,12 +929,14 @@ function AboutText(){
  */
 export default function App() {
 
-  //we will simply toggle this trigger whenever we want our Map to re-render our
-  //markers. specifically when a post or location is created
-  const [trigger, setTrigger] = useState(true);
+  //we will set this trigger to a locationID when we want to update that marker on the map
+  const [trigger, setTrigger] = useState(null);
+  //contains {lat, lng}
+  const [deviceLocation, setDeviceLocation] = useState(null);
 
   //asynchronously trigger so it runs after the App renders
-  setTimeout( () => {
+  useEffect(() => {
+    //try to open login banner
     if (!login){
       openBanner(
         "login-banner",
@@ -972,7 +947,62 @@ export default function App() {
         "indianred"
       );
     }
-  }, 0);
+
+  }, []);
+
+  //TRY TO FIND THEIR LOCATION AS QUICKLY AS POSSIBLE WHEN THE USER FIRST INTERACTS WITH THE PAGE
+  useEffect(() => {
+    const pingLocation = () => {
+      if (!navigator.geolocation) {
+        console.warn("Geolocation is not supported");
+        window.removeEventListener("click", pingLocation);
+        return;
+      }
+
+      //https://stackoverflow.com/questions/46573591/watchposition-vs-getcurrentposition-in-geolocation
+      //using getCurrentPosition instead of WatchPosition because location is not a core feature
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setDeviceLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          })
+        },
+        (err) => { console.warn(err); },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000
+      });
+
+      window.removeEventListener("load", pingLocation);
+
+      setTimeout(pingLocation, geolocationPingTimeout * 1000); //every n seconds, look for new location
+    };
+
+    window.addEventListener("load", pingLocation);
+  }, []);
+
+  // https://stackoverflow.com/questions/7950030/can-i-remove-just-the-popup-bubbles-of-pois-in-google-maps-api-v3
+  // Here we redefine the set() method.
+  //   If it is called for map option, we hide the InfoWindow, if "noSuppress"  
+  //   option is not true. As Google Maps does not know about this option,  
+  //   its InfoWindows will not be opened.
+  function hideInfoWindow() {
+    if (!window.google || !google.maps || !google.maps.InfoWindow) {
+      setTimeout(hideInfoWindow, 10); //try 10ms later
+      return;
+    }
+
+    var set = google.maps.InfoWindow.prototype.set;
+
+    google.maps.InfoWindow.prototype.set = function (key, val) {
+      if (key === 'map' && ! this.get('noSuppress')) return;
+      
+      set.apply(this, arguments); //disable pop-ups whenever you select a known POI
+    }
+  }
+
+  hideInfoWindow();
 
   return <>
     <div className="overlay">
@@ -982,10 +1012,10 @@ export default function App() {
           openModal(
             <LoadScriptNext 
               googleMapsApiKey={privateApiKey}
-              libraries={["marker"]}
+              libraries={GOOGLE_LIBRARIES}
               mapIds={[privateMapID]}
             >
-              <LocationCreateForm onSuccess={() => setTrigger(t => !t)} />
+              <LocationCreateForm onSuccess={(locationID) => setTrigger(locationID)} deviceLocation={deviceLocation} />
             </LoadScriptNext>
           );
         }} content={
@@ -999,10 +1029,10 @@ export default function App() {
     <div className="map-container">
       <LoadScriptNext //load the API
         googleMapsApiKey={privateApiKey}
-        libraries={["marker"]} //load marker library
+        libraries={GOOGLE_LIBRARIES} //load marker library
         mapIds={[privateMapID]}
       >
-        <Map mapId={privateMapID} trigger={trigger} onPostCreateSuccess={ () => setTrigger(t => !t) } />
+        <Map mapId={privateMapID} trigger={trigger} onPostCreateSuccess={ (locationID) => setTrigger(locationID) } deviceLocation={deviceLocation} />
       </LoadScriptNext>
     </div>
   </>;
