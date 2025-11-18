@@ -1,6 +1,7 @@
+//Authentication listener
 // importing auth from firebase authentication and helper functions 
 // from Firebase's SDK that perform the main authentication actions 
-import { auth } from "./firebase.js";
+import { auth } from "../firebase.js";
 import {
     GoogleAuthProvider,
     signInWithPopup,
