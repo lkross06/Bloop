@@ -41,7 +41,7 @@ const containerStyleSmall = {
 }
 
 //how many seconds to wait before pinging again for new location
-const geolocationPingTimeout = 3;
+const geolocationPingTimeout = 15;
 
 /**
  * Styles a pin's based on the average rating for a singular location
