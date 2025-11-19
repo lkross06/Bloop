@@ -688,7 +688,7 @@ function Map({ mapId, trigger, setTrigger, onPostCreateSuccess, deviceLocation }
 function PostCreateForm( { location, onSuccess }){
   //in theory, when this form appears the locationID is known (because that button triggers this modal)
   //  as well as the accountID (session storage..?)
-  const defaultRating = 3;
+  const defaultRating = 2.5;
   const maxNotesLength = 150;
 
   const [cleanliness, setCleanliness] = useState(defaultRating);
@@ -698,7 +698,15 @@ function PostCreateForm( { location, onSuccess }){
 
   function handleSubmit(e) {
     e.preventDefault();
-    let postID = DB.createPost(location.locationID, accountID, cleanliness, availability, amenities, notes); //TODO: currently we're just choosing a random account/location to post from/about
+
+    let postID = DB.createPost(
+      location.locationID,
+      accountID,
+      Math.round(cleanliness),
+      Math.round(availability),
+      Math.round(amenities),
+      notes
+    ); //TODO: currently we're just choosing a random account/location to post from/about
     
     onSuccess(location.locationID); //make the pin re-render
 
@@ -734,7 +742,7 @@ function PostCreateForm( { location, onSuccess }){
           onChange={(e) => setCleanliness(Number(e.target.value))}
           required
         />
-        <span className="slider-value">{Math.round(cleanliness)}</span>
+        <span className="slider-value"><StarRating rating={Math.round(cleanliness)} /></span>
       </div>
 
       <div className="create-form-group">
@@ -750,7 +758,7 @@ function PostCreateForm( { location, onSuccess }){
           onChange={(e) => setAvailability(Number(e.target.value))}
           required
         />
-        <span className="slider-value">{Math.round(availability)}</span>
+        <span className="slider-value"><StarRating rating={Math.round(availability)} /></span>
       </div>
 
       <div className="create-form-group">
@@ -766,7 +774,7 @@ function PostCreateForm( { location, onSuccess }){
           onChange={(e) => setAmenities(Number(e.target.value))}
           required
         />
-        <span className="slider-value">{Math.round(amenities)}</span>
+        <span className="slider-value"><StarRating rating={Math.round(amenities)} /></span>
       </div>
 
       <div className="create-form-group">
