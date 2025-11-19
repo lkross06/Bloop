@@ -342,7 +342,7 @@ function MapSmall({ mapId, updateParentLocation }) {
   //instead of just creating a new object for it
   const mapRef = useRef(null); //references will persist across re-renders of this component
   const [mapInstance, setMapInstance] = useState(null);
-  const [activeMarker, setActiveMarker] = useState(null);
+  const activeMarker = useRef(null);
 
   const onLoad = (map) => {
     mapRef.current = map;
@@ -362,16 +362,16 @@ function MapSmall({ mapId, updateParentLocation }) {
     const { AdvancedMarkerElement } = await google.maps.importLibrary("marker"); //the asynchronous part comes in here
 
     try {
-      if (activeMarker != null){
-        activeMarker.map = null; //dereference from map so we can make a new one
-        setActiveMarker(null);
+      if (activeMarker.current != null){
+        activeMarker.current.map = null; //dereference from map so we can make a new one
+        activeMarker.current = null;
       }
 
       //make the actual element
       const marker = new AdvancedMarkerElement({position: {lat: location.lat, lng: location.lng}, map: mapInstance}); //add the graphics and map
 
       marker.zIndex = 1;
-      setActiveMarker(marker);
+      activeMarker.current = marker;
 
       //now pan this map to the location
       mapInstance.panTo({
@@ -390,11 +390,11 @@ function MapSmall({ mapId, updateParentLocation }) {
       mapContainerStyle={containerStyleSmall}
       center={
         //for some reason the LoadScript is reloading here every time, so if we already placed a marker pan there instead
-        (activeMarker == null)?
+        (activeMarker.current == null)?
         { lat: mapStartCoords.lat, lng: mapStartCoords.lng } :
         {
-          lat: activeMarker.position.lat,
-          lng: activeMarker.position.lng
+          lat: activeMarker.current.position.lat,
+          lng: activeMarker.current.position.lng
         }
       }
       zoom={defaultZoomSmall} //let's show all of LA for now
@@ -432,11 +432,11 @@ function Map({ mapId, trigger, setTrigger, onPostCreateSuccess, deviceLocation }
   const [mapInstance, setMapInstance] = useState(null);
 
   //currently selected marker with a pop-up
-  const [activeMarker, setActiveMarker] = useState(null);
+  const activeMarker = useRef(null);
   const markersDict = useRef({}); //stores by locationID : AdvancedMarkerElement
   
   //also keep track of the currently drawn device marker
-  const [activeDeviceMarker, setActiveDeviceMarker] = useState(null);
+  const activeDeviceMarker = useRef(null);
 
   //we need React's useEffect to stay connected with external
   //systems (in this case our API)
@@ -533,16 +533,16 @@ function Map({ mapId, trigger, setTrigger, onPostCreateSuccess, deviceLocation }
         mapInstance.setZoom(maximumZoom); //zoom into the user's position
       });
 
-      if (activeDeviceMarker == null) {
+      if (activeDeviceMarker.current == null) {
         //if this is our first time loading the page, pan to the user's location
         mapInstance.panTo(position);
         mapInstance.setZoom(maximumZoom); //zoom into the user's position
       } else {
         //delete the currently drawn marker if there is one
-        activeDeviceMarker.setMap(null); //dereference from map
+        activeDeviceMarker.current.setMap(null); //dereference from map
       }
 
-      setActiveDeviceMarker(marker);
+      activeDeviceMarker.current = marker;
 
     } catch {
       //position was probably null we don't really care
@@ -563,13 +563,14 @@ function Map({ mapId, trigger, setTrigger, onPostCreateSuccess, deviceLocation }
      * @param {AdvancedMarkerElement} marker JS object rendered on Google Maps map
      */
     function handleMarkerClick(marker){
+      console.log()
       if (marker.state == "pin"){
-        closeMarkerPopup(activeMarker);
+        closeMarkerPopup(activeMarker.current);
         openMarkerPopup(marker);
-        setActiveMarker(marker);
+        activeMarker.current = marker;
       } else {
         closeMarkerPopup(marker);
-        setActiveMarker(null);
+        activeMarker.current = null;
       }
     }
 
