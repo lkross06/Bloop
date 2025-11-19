@@ -14,7 +14,8 @@ const accountID = 41;
 const privateApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 const privateMapID = import.meta.env.VITE_GOOGLE_MAPS_ID;
 
-const mapStartCoords = {lat: 34.0699, lng: -118.4438} //right now this is just ucla's coordinates
+//ucla's coordinates (default)
+const mapStartCoords = {lat: 34.0699, lng: -118.4438}
 
 /**
  * zoom = 0   whole world
@@ -22,11 +23,10 @@ const mapStartCoords = {lat: 34.0699, lng: -118.4438} //right now this is just u
  * zoom = 15  neighborhood
  * zoom = 20  streets
  */
-const minimumZoom = 11.5; //how far you can zoom out (1 = world view, 18 = street views)
+const minimumZoom = 11.5; //how far you can zoom out
 const maximumZoom = 16.5; //how far you can zoom in
 const defaultZoom = 15.5;
 
-//for the create location map
 const minimumZoomSmall = 11.5;
 const maximumZoomSmall = 16.9; //at 17, more labels are shown that would overcrowd the space
 const defaultZoomSmall = 14;
@@ -35,6 +35,7 @@ const containerStyle = {
   width: "100%", //fill entire map-container div
   height: "100%",
 };
+
 const containerStyleSmall = {
   width: "100%",
   height: "15rem"
@@ -44,12 +45,13 @@ const containerStyleSmall = {
 const geolocationPingTimeout = 15;
 
 /**
- * Styles a pin's based on the average rating for a singular location
+ * Styles a pin's color based on the average rating for a singular location
  * @param {JSON[]} locationPosts List of JSONS corresponding to posts about this location
  * @returns PinElement properties
  */
 function getPinProps(locationPosts){
 
+  //no posts about this location so no color rating
   if (locationPosts == null || locationPosts.length < 1){
     return {
       background: "#AAAAAA",
@@ -66,7 +68,7 @@ function getPinProps(locationPosts){
     total += 3;
   }
 
-  let average = sum / total; //otherwise, get an average that we can assign a red-yellow-green color to! 
+  let average = sum / total;
   
   let backgroundColor = ""; //lighter
   let borderColor = ""; //darker
@@ -99,34 +101,33 @@ function getPinProps(locationPosts){
 }
 
 /**
- * Generates a React Component with 0-5 yellow stars and n-(0-5) gray stars, rounded down from the rating
- * @param {JSON} props contains {rating}, average rating of Post or Location
- * @returns static star rating HTML object
+ * React Component with 0-5 yellow stars and [n - (0-5)] gray stars
+ * @param {JSON} props contains {rating}, rating between 0-5
+ * @returns static 5-star React component 
  */
-function StarRating( {rating} ){
+function StarRating({ rating }){
+  //if an invalid rating is passed in, render nothing
+  if (rating < 0 || rating > 5) return <></>
+
   const star = "★";
 
   let nFull = Math.round(rating);
   let nEmpty = 5 - nFull;
 
   return <span>
-    {/* Use CSS classes to color the different stars */}
     <span className="full-stars">{star.repeat(nFull)}</span>
     <span className="empty-stars">{star.repeat(nEmpty)}</span>
   </span>
 }
 
 /**
- * Generates a React Component with the colored symbol for gender
+ * React component with the colored symbol for gender
  * @param {JSON} props contains {gender}, either "M"/"F"/"N" for male/female/non-binary
- * @returns static gender HTML object
+ * @returns static text React component
  */
-function GenderSymbol( {gender} ){
+function GenderSymbol({ gender }){
   const male = "♂";
   const female = "♀";
-  // const all = "⚧";
-  // const male = "male";
-  // const female = "female";
   const all = "inclusive"
 
   if (gender == "m" || gender == "M") return <span className="male">{male}</span>
@@ -137,19 +138,18 @@ function GenderSymbol( {gender} ){
 }
 
 /**
- * Tries to close a currently active banner (we can only open one banner
- * at a time)
+ * Attempts to remove a currently active banner (we can only open one banner at a time)
  * @param {String} id unique id for this banner (so we don't accidentally close other banners)
- * @param {String} force if true, banner is deleted immediately. if false, closing animation plays and asynchronously deleted
+ * @param {String} force if true, banner is deleted immediately. if false (default), closing animation plays and asynchronously deleted
  * @returns true if successful and there was a banner to close, false otherwise
  */
 function closeBanner(id, force = false){
   try {
     let banner = document.getElementById(String(id));
   
-    // asynchronously remove item after 2 seconds (once animation is done)
+    //asynchronously remove item after 2 seconds (once animation is done)
     if (!force){
-      banner.firstChild.classList.remove("open"); //start slide up
+      banner.firstChild.classList.remove("open");
       setTimeout(
         () => { banner.remove(); },
         2000
@@ -165,15 +165,13 @@ function closeBanner(id, force = false){
 }
 
 /**
- * React component for showing a banner at the top of the site
+ * Renders a new banner at the top of the page
  * @param {String} id unique id for this banner (so we don't accidentally close other banners)
- * @param {HTMLElement} content content to put in banner
+ * @param {*} content JSX HTML content to put in banner
  * @param {String} backgroundColor background color for banner
  * @param {Number} lifetime ms until the banner is closed, or -1 to stay open indefinitely
  */
 function openBanner(id, content, backgroundColor, lifetime = -1){
-
-  //try to close the same instance of this banner
   closeBanner(id, true);
 
   //make the span the first child in <body>
@@ -181,11 +179,12 @@ function openBanner(id, content, backgroundColor, lifetime = -1){
   banner.setAttribute("id", String(id));
   banner.setAttribute("class", "banner");
   banner.setAttribute("style", "z-index: "
-    + String(10 + document.getElementsByClassName("banner").length) //default value is 100, but stack on top of any existing banners
+    + String(10 + document.getElementsByClassName("banner").length) //default z-index for banners is 10, but stack on top of any existing banners
   );
   
   document.body.insertBefore(banner, document.body.firstChild);
 
+  //render above the page
   ReactDOM.createRoot(banner).render(
     <>
       <div className="banner-container" style={ {"backgroundColor" : String(backgroundColor)} }>
@@ -202,14 +201,13 @@ function openBanner(id, content, backgroundColor, lifetime = -1){
   //asynchronously wait to close
   if (lifetime != -1){
     setTimeout(() => {
-      closeBanner(id); //TODO: it will close WHATEVER banner is open, even if it's from another lifetime...
+      closeBanner(id);
     }, lifetime);
   }
 }
 
 /**
- * Tries to close a currently active modal (we can only open one modal
- * at a time)
+ * Attempts to remove a currently active modal, closing any other modals in the process (only one active at a time)
  * @returns true if successful and there was a modal to close, false otherwise
  */
 function closeModal(){
@@ -223,13 +221,12 @@ function closeModal(){
 }
 
 /**
- * Creates a new modal React component that auto-destructs onclick
- * outside of modal body
- * @param {ReactComponentElement} modalContent JSX HTML for modal body
+ * Renders a new modal that closes onclick outside of modal body
+ * @param {*} modalContent JSX HTML content for modal body
  */
 function openModal(modalContent){
 
-  closeModal(); //close an active modal
+  closeModal();
 
   //make the span the first child in <body>
   var span = document.createElement("span");
@@ -239,7 +236,7 @@ function openModal(modalContent){
   ReactDOM.createRoot(span).render(
     <>
     <div onClick={(event) => { event.target.remove(); }} id="modal-container">
-      <div onClick={(event) => { event.stopPropagation(); }} id="modal-body">
+      <div onClick={(event) => { event.stopPropagation(); /* do nothing onClick */ }} id="modal-body"> 
         {modalContent}
       </div>
     </div>
@@ -248,20 +245,13 @@ function openModal(modalContent){
 }
 
 /**
- * Generate the HTML DOM for a location pop-up
- * @param {JSON} location Location to render a pop-up for
+ * Generates (not renders) HTML element for a location pop-up
+ * @param {JSON} location location to render a pop-up for
  * @param {JSON[]} posts list of Posts about this Location
- * @param {function} onSuccess callback function to trigger Map to update
+ * @param {Function} onSuccess callback function to trigger Map to re-render
  * @returns HTMLDivElement that can be rendered straight onto the Google Maps
  */
 function LocationPopUp(location, posts, onSuccess) {
-  function createPostModal(){
-    //open a create form with this modal
-    openModal(
-      <PostCreateForm location={location} onSuccess={onSuccess} />
-    );
-  }
-
   let cleanliness_sum = 0;
   let availability_sum = 0;
   let amenities_sum = 0;
@@ -282,18 +272,18 @@ function LocationPopUp(location, posts, onSuccess) {
   let amenitiesRating = 0;
 
   if (total_posts != 0) {
-    locationRating = ((cleanliness_sum + availability_sum + amenities_sum) / (total_posts * 3)).toFixed(1); //get the rating by taking average, round to 1 decimal pt for formatting
+    //get the rating by taking average, round to 1 decimal pt for formatting
+    locationRating = ((cleanliness_sum + availability_sum + amenities_sum) / (total_posts * 3)).toFixed(1);
     
+    //round the other ratings to be converted to StarRating components
     cleanlinessRating = Math.round(cleanliness_sum/total_posts);
     availabilityRating = Math.round(availability_sum/total_posts);
     amenitiesRating = Math.round(amenities_sum/total_posts);
   }
 
-  //create empty div
   const div = document.createElement("div");
-  div.setAttribute("class", "location-popup"); //NOT "className" because this is technically HTML not JSX
+  div.setAttribute("class", "location-popup"); //NOT "className" because this is HTML not JSX
 
-  //render JSX content inside div
   ReactDOM.createRoot(div).render(
     <>
       <span className="modal-header">
@@ -321,9 +311,12 @@ function LocationPopUp(location, posts, onSuccess) {
       </span>
 
       {
-      //we're going to need to verify this manually when we send to the server
       (login)? 
-        <button className="location-popup-button" onClick={createPostModal}>Create Post</button> : 
+        <button className="location-popup-button" onClick={ () => {
+          openModal(
+            <PostCreateForm location={location} onSuccess={onSuccess} />
+          );
+        }}>Create Post</button> : 
         <button className="location-popup-button" disabled>Create Post</button>
       }
     </>
@@ -333,14 +326,14 @@ function LocationPopUp(location, posts, onSuccess) {
 }
 
 /**
- * 
- * @param {*} param0 
- * @returns 
+ * React component to render a small Google Map for placing/updating one location pin
+ * @param {JSON} props contains {mapId, updateParentLocation}, mapId = private Map ID for styling, updateParentLocation = callback function whenever location pin is updated
+ * @returns interactable Google Maps React component
  */
 function MapSmall({ mapId, updateParentLocation }) {
-  //the map takes a second to load from the API to we keep references to it
-  //instead of just creating a new object for it
-  const mapRef = useRef(null); //references will persist across re-renders of this component
+  //references persist across renders and do not trigger re-renders, whereas states trigger re-renders
+  const mapRef = useRef(null);
+
   const [mapInstance, setMapInstance] = useState(null);
   const activeMarker = useRef(null);
 
@@ -349,31 +342,46 @@ function MapSmall({ mapId, updateParentLocation }) {
     setMapInstance(map);
   };
 
-  //NOTE: choosing to use JS objects instead of React objects (<AdvancedMarker... />) since this is more of a
-  //"back end" endeavor and easy communication with other external services isn't guranteed if we use React objects.
-  //So the only React object is the map, which handles everything.
+  const onClick = (e) => {
+    const location = {
+      lat: e.latLng.lat(),
+      lng: e.latLng.lng()
+    }
+
+    updateMarker(location);
+    updateParentLocation(location); //tell the parent component (location create form) where the new location pin is
+  }
 
   /**
-   * Asynchronously load JS object (Marker) to render on Google Maps Map React component.
-   * See notes below
-   * @param {JSON} location JSON containing Location data
+   * DESIGN DECISION
+   * We choose to use JS objects instead of React objects (<AdvancedMarker... />) since this is more of a
+   * "back end" endeavor and easy communication with other external services isn't guranteed if we use React objects.
+   * So the only React object is the map, which handles everything.
+   */
+
+  /**
+   * Asynchronously loads and render JS object (Marker) onto Google Map
+   * @param {JSON} location location data where click was, { lat: Number, lng: Number }
    */
   async function updateMarker(location){
-    const { AdvancedMarkerElement } = await google.maps.importLibrary("marker"); //the asynchronous part comes in here
+    const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
 
     try {
+      //remove the currently-rendered marker from the map
       if (activeMarker.current != null){
-        activeMarker.current.map = null; //dereference from map so we can make a new one
+        activeMarker.current.map = null;
         activeMarker.current = null;
       }
 
-      //make the actual element
-      const marker = new AdvancedMarkerElement({position: {lat: location.lat, lng: location.lng}, map: mapInstance}); //add the graphics and map
+      const marker = new AdvancedMarkerElement({
+        position: {lat: location.lat, lng: location.lng},
+        map: mapInstance
+      });
 
       marker.zIndex = 1;
       activeMarker.current = marker;
 
-      //now pan this map to the location
+      //focus the map on wherever the pin was just placed
       mapInstance.panTo({
         lat: marker.position.lat,
         lng: marker.position.lng
@@ -381,7 +389,7 @@ function MapSmall({ mapId, updateParentLocation }) {
       mapInstance.setZoom(maximumZoomSmall);
 
     } catch (e) {
-      console.error(e);
+      return
     }
   }
 
@@ -389,7 +397,7 @@ function MapSmall({ mapId, updateParentLocation }) {
     <GoogleMap
       mapContainerStyle={containerStyleSmall}
       center={
-        //for some reason the LoadScript is reloading here every time, so if we already placed a marker pan there instead
+        //LoadScript will reload this on re-renders
         (activeMarker.current == null)?
         { lat: mapStartCoords.lat, lng: mapStartCoords.lng } :
         {
@@ -397,17 +405,9 @@ function MapSmall({ mapId, updateParentLocation }) {
           lng: activeMarker.current.position.lng
         }
       }
-      zoom={defaultZoomSmall} //let's show all of LA for now
+      zoom={defaultZoomSmall}
       onLoad={onLoad}
-      onClick={(e) => {
-        const location = {
-          lat: e.latLng.lat(),
-          lng: e.latLng.lng()
-        }
-
-        updateMarker(location);
-        updateParentLocation(location); //tell the parent component (form) what the user's new location passed in is
-      }}
+      onClick={onClick}
       options={{
         mapId,
         disableDefaultUI: true,
@@ -421,26 +421,26 @@ function MapSmall({ mapId, updateParentLocation }) {
 }
 
 /**
- * React Map component for rendering Google Maps interactable map, along with all things rendered in it 
- * @param {JSON} props Takes { mapId, trigger, onPostCreateSuccess }-- private Map ID, trigger variable to watch --> re-render markers, and callback function to trigger re-render
- * @returns React component rendering interactable map and all interactble elements in it
+ * React component to render the main Google Map with location pins, current device location pin, and location pop-ups onClick
+ * @param {JSON} props { mapId, trigger, setTrigger, deviceLocation }, mapId = private Map ID, trigger = trigger variable to watch --> re-render marker, setTrigger = callback function that takes locationID and updates marker with that location, deviecLocation = {lat, lng} corresponding to most recent device's location
+ * @returns interactable Google Maps React component
  */
-function Map({ mapId, trigger, setTrigger, onPostCreateSuccess, deviceLocation }) {
-  //the map takes a second to load from the API to we keep references to it
-  //instead of just creating a new object for it
-  const mapRef = useRef(null); //references will persist across re-renders of this component
+function Map({ mapId, trigger, setTrigger, deviceLocation }) {
+  const mapRef = useRef(null);
   const [mapInstance, setMapInstance] = useState(null);
-
-  //currently selected marker with a pop-up
-  const activeMarker = useRef(null);
+  
+  const activeMarker = useRef(null); //currently selected marker with a pop-up
   const markersDict = useRef({}); //stores by locationID : AdvancedMarkerElement
   
-  //also keep track of the currently drawn device marker
-  const activeDeviceMarker = useRef(null);
+  const activeDeviceMarker = useRef(null); //current device marker
 
-  //we need React's useEffect to stay connected with external
-  //systems (in this case our API)
+  /**
+   * We use useEffect to communicate with asynchronous events triggered externally.
+   * In our case usually to update a parent React component from a change in the child,
+   * or to communicate with our Google and Navigator APIs and asynchronous calls
+   */
 
+  //when mapInstance renders for the first time
   useEffect(() => {
     if (mapInstance == null) return;
 
@@ -450,18 +450,18 @@ function Map({ mapId, trigger, setTrigger, onPostCreateSuccess, deviceLocation }
       delete markersDict.current[key];
     });
     
-    //draw all new markers
+    //draw all new markers once
     for (const location of DB.getLocationsAll()) {
       addMarker(location);
     }
   }, [mapInstance]);
 
+  //when the trigger tells us to update one of the location markers
   useEffect(() => {
     if (mapInstance == null || trigger == null) return;
 
     /* HERE WE EXPECT TRIGGER = LOCATION ID TO UPDATE */
 
-    //remove the one that needs to be updated
     if (markersDict.current[trigger] != null){
       markersDict.current[trigger].setMap(null);
       delete markersDict.current[trigger];
@@ -470,40 +470,40 @@ function Map({ mapId, trigger, setTrigger, onPostCreateSuccess, deviceLocation }
     const location = DB.getLocation(trigger);
     if (location != null) addMarker(location);
 
+    /**
+     * We must set back to null and re-trigger this callback (which returns immediately) here
+     * because, if we set trigger again and the same location needs to be updated again,
+     * useEffect() will not trigger because previous value == current value. This may happen
+     * if we create a new location and immediately post about it (which very well might happen with
+     * our users!). null ensures previous value != current value
+     */
     setTrigger(null);
 
   }, [trigger]);
 
+  //wait for asynchronous updates from Navigator API, managed by parent React component
   useEffect(() => {
-    //App component's API connection receives something
     if (mapInstance == null || deviceLocation == null) return;    
 
     updateDeviceMarker(deviceLocation);
 
-  }, [deviceLocation]); //when the device's location updates, App sends a ping here
+  }, [deviceLocation]);
 
   const onLoad = (map) => {
     mapRef.current = map;
     setMapInstance(map);
   };
 
-  //NOTE: choosing to use JS objects instead of React objects (<AdvancedMarker... />) since this is more of a
-  //"back end" endeavor and easy communication with other external services isn't guranteed if we use React objects.
-  //So the only React object is the map, which handles everything.
-
   /**
-   * Asynchronously load JS object (Marker) that updates whenever Navigator API asynchronously updates
-   * device's current GPS position
-   * 
+   * Asynchronously loads and renders JS Object (marker) for the device's current location
    * @param {*} position contaings {lat, lng} to updated AdvancedMarkerElement
    */
   async function updateDeviceMarker(position){
-    const { AdvancedMarkerElement } = await google.maps.importLibrary("marker"); //the asynchronous part comes in here
+    const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
 
     try {
-
       let parser = new DOMParser();
-      //modified from https://developers.google.com/maps/documentation/javascript/advanced-markers/graphic-markers#javascript
+      //see https://developers.google.com/maps/documentation/javascript/advanced-markers/graphic-markers#javascript
       const svgSrc = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-16 -16 32 32">
         <defs>
           <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
@@ -511,15 +511,14 @@ function Map({ mapId, trigger, setTrigger, onPostCreateSuccess, deviceLocation }
           </filter>
         </defs>
 
-        <!-- Outer circle -->
+        <!-- outer circle -->
         <circle cx="0" cy="0" r="10" fill="aliceblue" filter="url(#shadow)" />
 
-        <!-- Inner circle -->
+        <!-- inner circle -->
         <circle cx="0" cy="0" r="8" fill="slateblue" />
       </svg>`;
       const svg = parser.parseFromString(svgSrc, 'image/svg+xml').documentElement;
 
-      //make the actual element
       const marker = new AdvancedMarkerElement(
         {position: position,
         map: mapInstance
@@ -534,85 +533,80 @@ function Map({ mapId, trigger, setTrigger, onPostCreateSuccess, deviceLocation }
       });
 
       if (activeDeviceMarker.current == null) {
-        //if this is our first time loading the page, pan to the user's location
+        //when the device's location is found for the first time, zoom into its location
         mapInstance.panTo(position);
-        mapInstance.setZoom(maximumZoom); //zoom into the user's position
+        mapInstance.setZoom(maximumZoom);
       } else {
-        //delete the currently drawn marker if there is one
-        activeDeviceMarker.current.setMap(null); //dereference from map
+        //remove currently rendered marker
+        activeDeviceMarker.current.setMap(null);
       }
 
       activeDeviceMarker.current = marker;
 
-    } catch {
-      //position was probably null we don't really care
+    } catch (e) {
+
     }
   }
 
   /**
-   * Asynchronously load JS object (Marker) to render on Google Maps Map React component.
-   * 
-   * NOTE: choosing to use JS objects instead of React objects (<AdvancedMarker... />) since this is more of a
-   *   back-end endeavor and easy communication with other external services isn't guranteed if we use React objects.
-   *   So the only React object is the map, which handles everything.
-   * @param {JSON} location JSON containing Location data
+   * Asynchronously loads and renders JS object (Marker) onto Google Maps React component
+   * @param {JSON} location location to add marker for
    */
   async function addMarker(location){
     /**
-     * Handle mouse click event on a marker
-     * @param {AdvancedMarkerElement} marker JS object rendered on Google Maps map
+     * Handle mouse click event on a Google Maps marker
+     * @param {AdvancedMarkerElement} marker JS object rendered on Google Maps map triggered by event
      */
     function handleMarkerClick(marker){
-      console.log()
       if (marker.state == "pin"){
+        //show the location pop-up
         closeMarkerPopup(activeMarker.current);
         openMarkerPopup(marker);
         activeMarker.current = marker;
       } else {
+        //close the location pop-up
         closeMarkerPopup(marker);
         activeMarker.current = null;
       }
     }
 
     /**
-     * Open the location pop-up for a marker representing a location
+     * Render the location pop-up for a marker representing a location
      * @param {AdvancedMarkerElement} marker JS object rendered on Google Maps map
      * @returns true if successful, false otherwise
      */
     function openMarkerPopup(marker){
-      if (marker == null) return;
+      if (marker == null) return false;
 
       try {
           const locationData = DB.getLocation(marker.locationID);
           const postData = DB.getPostsForLocation(marker.locationID);
 
           marker.content = LocationPopUp(locationData, postData, (locationID) => {
-            //edit the callback function slightly so that the map 
-            //  stays centered on wherever the post was just made
-            onPostCreateSuccess(locationID);
+            //on successful post creation, trigger a re-render
+            setTrigger(locationID);
             mapInstance.panTo({lat: marker.position.lat + 0.003, lng: marker.position.lng})
           });
+
           marker.zIndex = 3;
           marker.state = "popup"
 
-          //when a pop-up is shown, pan the map over to center on that location
-          //and offset by 0.003° N so that the large location pop-up is centered
+          //when a pop-up is shown, pan the map over to center on that location and offset by 0.003° N so that the large location pop-up is centered
           mapInstance.panTo({lat: marker.position.lat + 0.003, lng: marker.position.lng});
 
           return true
       } catch (e) {
-        console.error(e);
         return false
       }
     }
 
     /**
-     * Closes the currently-open location pop-up for a marker representing a location
+     * Closes the currently-rendered location pop-up for a marker representing a location
      * @param {AdvancedMarkerElement} marker JS object rendered on Google Maps map
      * @returns true if successful, false otherwise
      */
     function closeMarkerPopup(marker){
-      if (marker == null) return;
+      if (marker == null) return false;
 
       try {
         var postData = DB.getPostsForLocation(marker.locationID);
@@ -623,33 +617,30 @@ function Map({ mapId, trigger, setTrigger, onPostCreateSuccess, deviceLocation }
 
         return true;
       } catch (e) {
-        console.error(e);
         return false;
       }
     }
 
-    const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker"); //the asynchronous part comes in here
+    const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
 
     try {
+      let posts = [];
 
-      //first try to load all of the posts related to this location
-      //if we store this information with the React component we get around having to keep polling the DBMS
-      let posts = []
-
-      //access all of the posts related to this location
       for (const locationPost of location.posts){
         const retrievedPostData = DB.getPost(String(locationPost));
-        //if the post actually exists
         if (retrievedPostData != null) posts.push(retrievedPostData);
       }
 
-      //make the graphics
+      //by default, render the pin (not selected state)
       const defaultPin = new PinElement(getPinProps(posts));
 
-      //make the actual element
-      const marker = new AdvancedMarkerElement({position: {lat: location.lat, lng: location.lng}, map: mapInstance, content: defaultPin}); //add the graphics and map
+      const marker = new AdvancedMarkerElement({
+        position: {lat: location.lat, lng: location.lng},
+        map: mapInstance,
+        content: defaultPin
+      });
 
-      marker.locationID = location.locationID;
+      marker.locationID = location.locationID; //custom property
       marker.zIndex = 1;
       marker.state = "pin";
       
@@ -658,7 +649,7 @@ function Map({ mapId, trigger, setTrigger, onPostCreateSuccess, deviceLocation }
       markersDict.current[location.locationID] = marker;
 
     } catch (e) {
-      console.error(e);
+
     }
   }
 
@@ -666,7 +657,7 @@ function Map({ mapId, trigger, setTrigger, onPostCreateSuccess, deviceLocation }
     <GoogleMap
       mapContainerStyle={containerStyle}
       center={mapStartCoords}
-      zoom={defaultZoom} //let's show all of LA for now
+      zoom={defaultZoom}
       onLoad={onLoad}
       options={{
         mapId,
@@ -682,12 +673,10 @@ function Map({ mapId, trigger, setTrigger, onPostCreateSuccess, deviceLocation }
 
 /**
  * React component form for creating a new Post
- * @param {JSON} props contains { location, onSuccess }, location to make post for, callback function to re-render map with new post data
- * @returns React component
+ * @param {JSON} props { location, onSuccess }, location = location to make post for, onSuccess = callback function to re-render map with new post data
+ * @returns form React component
  */
-function PostCreateForm( { location, onSuccess }){
-  //in theory, when this form appears the locationID is known (because that button triggers this modal)
-  //  as well as the accountID (session storage..?)
+function PostCreateForm({ location, onSuccess }){
   const defaultRating = 2.5;
   const maxNotesLength = 150;
 
@@ -697,7 +686,7 @@ function PostCreateForm( { location, onSuccess }){
   const [notes, setNotes] = useState("");
 
   function handleSubmit(e) {
-    e.preventDefault();
+    e.preventDefault(); //do not reload the page
 
     let postID = DB.createPost(
       location.locationID,
@@ -706,11 +695,12 @@ function PostCreateForm( { location, onSuccess }){
       Math.round(availability),
       Math.round(amenities),
       notes
-    ); //TODO: currently we're just choosing a random account/location to post from/about
+    );
     
-    onSuccess(location.locationID); //make the pin re-render
+    //trigger the map to re-render the pin
+    onSuccess(location.locationID);
 
-    //make a success message appear
+    //show success banner for 5s
     closeModal();
     openBanner(
       "create-" + String(postID),
@@ -797,11 +787,10 @@ function PostCreateForm( { location, onSuccess }){
 
 /**
  * React component form for creating a new Location
- * @param {JSON} props contains { onSuccess }, callback function to re-render map with new location
- * @returns React component
+ * @param {JSON} props { onSuccess, deviceLocation }, onSuccess = callback function to re-render map with new location, deviceLocation = {lat,lng} containing device's last-known location
+ * @returns form React component
  */
-function LocationCreateForm( { onSuccess, deviceLocation } ){
-
+function LocationCreateForm({ onSuccess, deviceLocation }){
   const maxNameLength = 30;
 
   const [name, setName] = useState("");
@@ -809,17 +798,17 @@ function LocationCreateForm( { onSuccess, deviceLocation } ){
   const [location, setLocation] = useState(null);
 
   function handleSubmit(e) {
-    e.preventDefault();
+    e.preventDefault(); //do not reload the page
 
-    const latitude = parseFloat(location.lat.toFixed(4));
+    const latitude = parseFloat(location.lat.toFixed(4)); //+-0.0001° is close enough
     const longitude = parseFloat(location.lng.toFixed(4));
-
 
     let locationID = DB.createLocation(name, gender, latitude, longitude);
 
-    onSuccess(locationID); //trigger the map to re-render that pin
+    //trigger the map to re-render the pin
+    onSuccess(locationID);
     
-    //make a success message appear
+    //show success message for 5s
     closeModal();
     openBanner(
       "create-" + String(locationID),
@@ -897,14 +886,13 @@ function LocationCreateForm( { onSuccess, deviceLocation } ){
       <div className="create-form-group">
         <label className="create-form-label">Location <span className="required-asterisk">*</span></label>
         <div>
-          {/* make another map to render */}
-          {/* NOTE: we load LoadScript outside the updating react component */}
+          {/* NOTE: we load LoadScript outside this updating React component */}
           <MapSmall mapId={privateMapID} updateParentLocation={(location) => { setLocation(location); } } deviceLocation={deviceLocation} />
         </div>
       </div>
 
       {
-        //we're going to need to verify this manually when we send to the server
+        //TODO: manually verify on back-end
         (login)? 
           <button type="submit" className="create-form-submit">Create Location</button> : 
           <button type="submit" className="create-form-submit" disabled>Create Location</button>
@@ -914,14 +902,18 @@ function LocationCreateForm( { onSuccess, deviceLocation } ){
 }
 
 /**
- * Create a React component button to be placed on the overlay UI
- * @param {JSON} props contains onClick (function to call on button click), content (content inside button)
- * @returns React component
+ * React component button to be placed on the overlay UI
+ * @param {JSON} props {onClick, content}, onClick = button click handler, content = HTML content inside button
+ * @returns button React component
  */
 function OverlayButton( { onClick, content } ){ 
   return <button className = "overlay-button" onClick={onClick}>{content}</button>
 }
 
+/**
+ * React component text about this project
+ * @returns HTML text content
+ */
 function AboutText(){
   return <>
     <div className="about">
@@ -939,15 +931,12 @@ function AboutText(){
  * @returns React component main container
  */
 export default function App() {
+  const [trigger, setTrigger] = useState(null); //set to a locationID to trigger that location marker to update
+  const [deviceLocation, setDeviceLocation] = useState(null); //contains {lat, lng}
 
-  //we will set this trigger to a locationID when we want to update that marker on the map
-  const [trigger, setTrigger] = useState(null);
-  //contains {lat, lng}
-  const [deviceLocation, setDeviceLocation] = useState(null);
-
-  //asynchronously trigger so it runs after the App renders
+  //asynchronously call after App renders
   useEffect(() => {
-    //try to open login banner
+    //TODO: manually verify on back-end
     if (!login){
       openBanner(
         "login-banner",
@@ -970,8 +959,13 @@ export default function App() {
         return;
       }
 
-      //https://stackoverflow.com/questions/46573591/watchposition-vs-getcurrentposition-in-geolocation
-      //using getCurrentPosition instead of WatchPosition because location is not a core feature
+      /**
+       * DESIGN DECISION
+       * https://stackoverflow.com/questions/46573591/watchposition-vs-getcurrentposition-in-geolocation
+       * Using getCurrentPosition instead of watchPosition because device location is not a core feature,
+       * and watchPosition consume much more battery staying constantly active than sending an asynchronous
+       * ping every n seconds.
+       */
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setDeviceLocation({
@@ -979,28 +973,28 @@ export default function App() {
             lng: position.coords.longitude
           })
         },
-        (err) => { console.warn(err); },
+        (err) => {},
         {
           enableHighAccuracy: true,
-          timeout: 5000
+          timeout: 5000 //try to poll API for 5s at a time
       });
 
       window.removeEventListener("load", pingLocation);
 
-      setTimeout(pingLocation, geolocationPingTimeout * 1000); //every n seconds, look for new location
+      //ping GPS module again after timeout
+      setTimeout(pingLocation, geolocationPingTimeout * 1000);
     };
 
-    window.addEventListener("load", pingLocation);
+    window.addEventListener("load", pingLocation); //onload, ping GPS module once
   }, []);
 
-  // https://stackoverflow.com/questions/7950030/can-i-remove-just-the-popup-bubbles-of-pois-in-google-maps-api-v3
-  // Here we redefine the set() method.
-  //   If it is called for map option, we hide the InfoWindow, if "noSuppress"  
-  //   option is not true. As Google Maps does not know about this option,  
-  //   its InfoWindows will not be opened.
+  /**
+   * Hides all default location pop-ups in Google Maps
+   * https://stackoverflow.com/questions/7950030/can-i-remove-just-the-popup-bubbles-of-pois-in-google-maps-api-v3
+   */
   function hideInfoWindow() {
     if (!window.google || !google.maps || !google.maps.InfoWindow) {
-      setTimeout(hideInfoWindow, 10); //try 10ms later
+      setTimeout(hideInfoWindow, 10); //try 10ms later until Google API loads
       return;
     }
 
@@ -1038,12 +1032,12 @@ export default function App() {
       </span>
     </div>
     <div className="map-container">
-      <LoadScriptNext //load the API
+      <LoadScriptNext
         googleMapsApiKey={privateApiKey}
-        libraries={GOOGLE_LIBRARIES} //load marker library
+        libraries={GOOGLE_LIBRARIES}
         mapIds={[privateMapID]}
       >
-        <Map mapId={privateMapID} trigger={trigger} setTrigger={setTrigger} onPostCreateSuccess={ (locationID) => setTrigger(locationID) } deviceLocation={deviceLocation} />
+        <Map mapId={privateMapID} trigger={trigger} setTrigger={setTrigger} deviceLocation={deviceLocation} />
       </LoadScriptNext>
     </div>
   </>;
