@@ -77,12 +77,37 @@ class DBHandler {
   /** ------- POST DATA ------ */
 
   /**
-   * Get specific post from database
+   * Get specific post from database based on Post ID
    * @param {*} postID unique identifier for this post
    * @returns JSON representing post with same postID, null if not found
    */
   getPost(postID) {
     return this.posts[String(postID)] || null;
+  }
+
+  /**
+   * Get specific post from database based on Account ID and Location ID
+   * @param {*} accountID unique identifier for account that made this post
+   * @param {*} locationID unique identifier for location this post is about
+   * @returns JSON representing post with same accountID/locationID, null if not found
+   */
+  getPostByAccountAndLocation(accountID, locationID) {
+    try {
+      const a = this.getAccount(accountID);
+      const l = this.getLocation(locationID);
+
+      const a_posts = new Set(a.posts);
+      for (const l_post of l.posts){
+        if (a_posts.has(l_post)){
+          //we found our post
+          return this.getPost(l_post);
+        }
+      }
+
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 
   getPostsForLocation(locationID) {
@@ -130,6 +155,25 @@ class DBHandler {
       return id;
     } catch (e) {
       return null;
+    }
+  }
+
+  updatePost(postID, locationID, accountID, cleanliness, availability, amenities, notes, timestamp){
+    try {
+      this.posts[postID] = {
+        postID: postID,
+        locationID: locationID,
+        accountID: accountID,
+        cleanliness: cleanliness,
+        availability: availability,
+        amenities: amenities,
+        notes: notes,
+        timestamp: timestamp
+      };
+
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 

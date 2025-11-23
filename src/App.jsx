@@ -685,18 +685,53 @@ function PostCreateForm({ location, onSuccess }){
   const [amenities, setAmenities] = useState(defaultRating);
   const [notes, setNotes] = useState("");
 
-  function handleSubmit(e) {
-    e.preventDefault(); //do not reload the page
+  const existingPostID = useRef(null);
+  const [submitText, setSubmitText] = useState("Create Post");
 
-    let postID = DB.createPost(
-      location.locationID,
-      accountID,
-      Math.round(cleanliness),
-      Math.round(availability),
-      Math.round(amenities),
-      notes,
-      Date.now()
-    );
+  //if this account already posted this location, edit the existing post instead of creating a new one
+  useEffect(() => {
+    const post = DB.getPostByAccountAndLocation(accountID, location.locationID);
+
+    console.log(post);
+
+    if (post != null) {
+      existingPostID.current = post.postID;
+      setCleanliness(post.cleanliness);
+      setAvailability(post.availability);
+      setAmenities(post.amenities);
+      setNotes(post.notes);
+      setSubmitText("Update Post");
+    }
+  }, [location]);
+
+  function handleSubmit(e) {
+    e.preventDefault(); //do not reload the pag
+    
+    let postID = null;
+
+    if (existingPostID.current != null){
+      postID = existingPostID.current;
+      DB.updatePost(
+        postID,
+        location.locationID,
+        accountID,
+        Math.round(cleanliness),
+        Math.round(availability),
+        Math.round(amenities),
+        notes,
+        Date.now()
+      );
+    } else {
+      postID = DB.createPost(
+        location.locationID,
+        accountID,
+        Math.round(cleanliness),
+        Math.round(availability),
+        Math.round(amenities),
+        notes,
+        Date.now()
+      );
+    }
     
     //trigger the map to re-render the pin
     onSuccess(location.locationID);
@@ -781,7 +816,7 @@ function PostCreateForm({ location, onSuccess }){
         <span className="slider-value">{notes.length} / {maxNotesLength}</span>
       </div>
 
-      <button type="submit" className="create-form-submit">Create Post</button>
+      <button type="submit" className="create-form-submit">{submitText}</button>
     </form>
   );
 }
