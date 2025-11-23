@@ -709,6 +709,8 @@ function PostCreateForm({ location, onSuccess }){
     
     let postID = null;
 
+    let timestamp = Date.now();
+
     if (existingPostID.current != null){
       postID = existingPostID.current;
       DB.updatePost(
@@ -719,7 +721,7 @@ function PostCreateForm({ location, onSuccess }){
         Math.round(availability),
         Math.round(amenities),
         notes,
-        Date.now()
+        timestamp
       );
     } else {
       postID = DB.createPost(
@@ -729,7 +731,7 @@ function PostCreateForm({ location, onSuccess }){
         Math.round(availability),
         Math.round(amenities),
         notes,
-        Date.now()
+        timestamp
       );
     }
     
@@ -739,7 +741,7 @@ function PostCreateForm({ location, onSuccess }){
     //show success banner for 5s
     closeModal();
     openBanner(
-      "create-" + String(postID),
+      "create-" + String(postID) + "-" + String(timestamp),
       <p>Post created successfully!</p>,
       "mediumseagreen",
       5000
@@ -816,7 +818,7 @@ function PostCreateForm({ location, onSuccess }){
         <span className="slider-value">{notes.length} / {maxNotesLength}</span>
       </div>
 
-      <button type="submit" className="create-form-submit">{submitText}</button>
+      <button type="submit" className="create-form-submit">Create Post</button>
     </form>
   );
 }
