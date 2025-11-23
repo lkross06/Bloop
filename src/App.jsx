@@ -694,7 +694,8 @@ function PostCreateForm({ location, onSuccess }){
       Math.round(cleanliness),
       Math.round(availability),
       Math.round(amenities),
-      notes
+      notes,
+      Date.now()
     );
     
     //trigger the map to re-render the pin

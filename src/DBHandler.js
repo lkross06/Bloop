@@ -100,7 +100,7 @@ class DBHandler {
     return posts;
   }
 
-  createPost(locationID, accountID, cleanliness, availability, amenities, notes){
+  createPost(locationID, accountID, cleanliness, availability, amenities, notes, timestamp){
     try {
       //generate a new unique ID
       const id = DBHandler.#generateUniqueID();
@@ -112,7 +112,8 @@ class DBHandler {
         cleanliness: cleanliness,
         availability: availability,
         amenities: amenities,
-        notes: notes
+        notes: notes,
+        timestamp: timestamp
       };
     
       //try to make sure the account/location exist first, so that the try/catch will catch bad values
