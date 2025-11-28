@@ -192,6 +192,12 @@ class DBHandler {
     console.log(this.locations);
   }
 
+  testGET(){
+    fetch("http://localhost:3000/test")
+      .then((res) => res.json())
+      .then((data) => console.log(data.message))
+      .catch((err) => console.error("Fetch error:", err));
+  }
 }
 
 export default DBHandler;

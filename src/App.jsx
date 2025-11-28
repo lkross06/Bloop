@@ -1067,6 +1067,9 @@ export default function App() {
         <OverlayButton onClick={() => { openModal(<AboutText />); }} content={
           <p>?</p>
         } />
+        <OverlayButton onClick={() => { DB.testGET(); }} content={
+          <p>test</p>
+         } />
       </span>
     </div>
     <div className="map-container">
