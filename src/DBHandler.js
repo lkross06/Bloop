@@ -3,8 +3,6 @@ import locationData from "./data/location.json";
 import postData from "./data/post.json";
 import accountData from "./data/account.json";
 
-import { sha256 } from 'js-sha256';
-
 class DBHandler {
 
   constructor(){
@@ -14,8 +12,7 @@ class DBHandler {
   }
 
   static #generateUniqueID(){
-    // return sha256(String(Date.now())); //creates a 256-bit hash using the current time in ms. so this is a one-time, deterministic UID
-    return Date.now();
+    return Date.now(); //theoretically deterministic
   }
 
   /** ------- LOCATION DATA ------ */
