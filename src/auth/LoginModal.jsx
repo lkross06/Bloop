@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuthState } from './useAuthState';
 import './loginModal.css';
 
-export default function LoginModal({ isOpen, onClose, onLogin }) {
+export default function LoginModal({ isOpen, onClose, onGoogleLogin }) {
   // ALL HOOKS MUST BE CALLED FIRST (before any returns)
   
   // Get the current auth state
@@ -41,7 +41,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
         
         {/* Google Login Button */}
         
-          <button className="modal-button" onClick={onLogin}>
+          <button className="modal-button" onClick={onGoogleLogin}>
             Continue with Google
           </button>
         

@@ -8,6 +8,10 @@ import DBHandler from "./DBHandler"
 import LoginModal from "./auth/LoginModal";
 import {useAuthState} from "./auth/useAuthState";
 
+// used for log in with google
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "./firebase";
+
 const DB = new DBHandler();
 
 //TODO: REPLACE WITH SESSION DATA
@@ -971,6 +975,19 @@ export default function App() {
   //convert user to boolean- true if logged in, false if not
   const isLoggedIn = !!user;
 
+  const handleGoogleLogin = async () => {
+    try
+    {
+      await signInWithPopup(auth, googleProvider);
+      setIsLoginOpen(false);
+    }
+    catch(err)
+    {
+      console.error("Google login failed", err);
+      alert("Google login failed: " + err.mesage);
+    }
+  }
+
   //asynchronously trigger so it runs after the App renders
   useEffect( () => {
     //only show banner if not loading and not logged in
@@ -1010,6 +1027,7 @@ export default function App() {
     <LoginModal 
       isOpen={isLoginOpen}
       onClose={() => setIsLoginOpen(false)}
+      onGoogleLogin={handleGoogleLogin}
     />
     <div className="overlay">
       <h1 id="app-title" className="overlay">bloop</h1>
