@@ -8,9 +8,10 @@ import DBHandler from "./DBHandler"
 import LoginModal from "./auth/LoginModal";
 import {useAuthState} from "./auth/useAuthState";
 
-// used for log in with google
-import { signInWithPopup } from "firebase/auth";
+// used for log in with google and log out
+import { signInWithPopup, signOut } from "firebase/auth";
 import { auth, googleProvider } from "./firebase";
+
 
 const DB = new DBHandler();
 
@@ -988,6 +989,15 @@ export default function App() {
     }
   }
 
+  const handleLogout = async () => {
+    try{
+      await signOut(auth);
+    }
+    catch(err){
+      console.error("Logout fauled", err);
+    }
+  }
+
   //asynchronously trigger so it runs after the App renders
   useEffect( () => {
     //only show banner if not loading and not logged in
@@ -1031,6 +1041,13 @@ export default function App() {
     />
     <div className="overlay">
       <h1 id="app-title" className="overlay">bloop</h1>
+
+      {isLoggedIn && (
+        <button className="logout-button" onClick={handleLogout}>
+          Logout
+        </button>
+      )}
+
       <span className="overlay-buttons">
         <OverlayButton onClick={handlePlusClick} 
         content={
