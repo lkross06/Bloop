@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthState } from './useAuthState';
+import './loginModal.css';
 
-export default function LoginModal({ isOpen, onClose }) {
+export default function LoginModal({ isOpen, onClose, onLogin }) {
   // Get the current auth state
   const { user, loading } = useAuthState();
 
@@ -31,20 +32,18 @@ export default function LoginModal({ isOpen, onClose }) {
   };
 
   return (
-    <div className="login-modal">
-      {/* Close button */}
-      <button 
-        type="button" 
-        onClick={onClose}
-        aria-label="Close"
-      >
-        X
-      </button>
-
-      {/* Modal content */}
-      <div className="login-modal-content">
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <h2>Sign Up</h2>
         
+        {/* Google Login Button */}
+        {onLogin && (
+          <button className="modal-button" onClick={onLogin}>
+            Continue with Google
+          </button>
+        )}
+
+        {/* Email/Password Form */}
         <form onSubmit={handleSubmit}>
           {/* Email input */}
           <div>
@@ -71,8 +70,13 @@ export default function LoginModal({ isOpen, onClose }) {
           </div>
 
           {/* Sign up button */}
-          <button type="submit">Sign Up</button>
+          <button type="submit" className="modal-button">Sign Up</button>
         </form>
+
+        {/* Close button */}
+        <button className="close-button" onClick={onClose}>
+          Close
+        </button>
       </div>
     </div>
   );
