@@ -7,5 +7,10 @@ export default defineConfig({
     proxy: {
       "/test": "http://localhost:3000" //forward all requests to express back-end service
     }
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/__tests__/setup.js',
   }
 });
