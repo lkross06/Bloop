@@ -1,10 +1,12 @@
 import { useRef, useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 
+
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
 import DBHandler from "./DBHandler"
 
 import LoginModal from "./auth/LoginModal";
+import {useAuthState} from "./auth/useAuthState";
 
 const DB = new DBHandler();
 
@@ -252,7 +254,7 @@ function openModal(modalContent){
  * @param {function} onSuccess callback function to trigger Map to update
  * @returns HTMLDivElement that can be rendered straight onto the Google Maps
  */
-function LocationPopUp(location, posts, onSuccess) {
+function LocationPopUp(location, posts, onSuccess, isLoggedIn) {
   function createPostModal(){
     //open a create form with this modal
     openModal(
@@ -320,7 +322,7 @@ function LocationPopUp(location, posts, onSuccess) {
 
       {
       //we're going to need to verify this manually when we send to the server
-      (login)? 
+      (isLoggedIn)? 
         <button className="location-popup-button" onClick={createPostModal}>Create Post</button> : 
         <button className="location-popup-button" disabled>Create Post</button>
       }
@@ -445,7 +447,7 @@ function MapSmall({ mapId, updateParentLocation }) {
  * @param {JSON} props Takes { mapId, trigger, onPostCreateSuccess }-- private Map ID, trigger variable to watch --> re-render markers, and callback function to trigger re-render
  * @returns React component rendering interactable map and all interactble elements in it
  */
-function Map({ mapId, trigger, onPostCreateSuccess }) {
+function Map({ mapId, trigger, onPostCreateSuccess, isLoggedIn }) {
   //the map takes a second to load from the API to we keep references to it
   //instead of just creating a new object for it
   const mapRef = useRef(null); //references will persist across re-renders of this component
@@ -606,7 +608,7 @@ function Map({ mapId, trigger, onPostCreateSuccess }) {
             //  stays centered on wherever the post was just made
             onPostCreateSuccess();
             mapInstance.panTo({lat: marker.position.lat + 0.003, lng: marker.position.lng})
-          });
+          }, isLoggedIn); //pass in isLoggedIn to the LocationPopUp function
           marker.zIndex = 2;
           marker.state = "popup"
 
@@ -965,11 +967,14 @@ export default function App() {
   // keeps track of whether the login is open or not
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   // keeps track of whether the user is actually logged in or not 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user, loading } = useAuthState();
+  //convert user to boolean- true if logged in, false if not
+  const isLoggedIn = !!user;
 
   //asynchronously trigger so it runs after the App renders
   useEffect( () => {
-    if (!isLoggedIn){
+    //only show banner if not loading and not logged in
+    if (!loading && !isLoggedIn){
       openBanner(
         "login-banner",
         <p>Currently this page is read-only. <span className="login-button" onClick={() => {
@@ -979,28 +984,38 @@ export default function App() {
         "indianred"
       );
     }
-  }, 0);
+  }, [loading, isLoggedIn]); //Dependency array to re-run effect when loading or isLoggedIn changes
+
+  //handle plus button click
+  const handlePlusClick = () => {
+    if (isLoggedIn) {
+      //show location create form
+    openModal(
+      <LoadScriptNext 
+        googleMapsApiKey={privateApiKey}
+        libraries={["marker"]}
+        mapIds={[privateMapID]}
+      >
+        <LocationCreateForm onSuccess={() => setTrigger(t => !t)} />
+      </LoadScriptNext>
+    );
+  } else {
+    // User is NOT logged in - show login modal instead
+    setIsLoginOpen(true);
+  }
+};
 
   return <>
     {/* Login popup controlled by isLoginOpen */}
     <LoginModal 
-      open={isLoginOpen}
+      isOpen={isLoginOpen}
       onClose={() => setIsLoginOpen(false)}
     />
     <div className="overlay">
       <h1 id="app-title" className="overlay">bloop</h1>
       <span className="overlay-buttons">
-        <OverlayButton onClick={() => {
-          openModal(
-            <LoadScriptNext 
-              googleMapsApiKey={privateApiKey}
-              libraries={["marker"]}
-              mapIds={[privateMapID]}
-            >
-              <LocationCreateForm onSuccess={() => setTrigger(t => !t)} />
-            </LoadScriptNext>
-          );
-        }} content={
+        <OverlayButton onClick={handlePlusClick} 
+        content={
           <p>＋</p>
         } />
         <OverlayButton onClick={() => { openModal(<AboutText />); }} content={
@@ -1014,7 +1029,7 @@ export default function App() {
         libraries={["marker"]} //load marker library
         mapIds={[privateMapID]}
       >
-        <Map mapId={privateMapID} trigger={trigger} onPostCreateSuccess={ () => setTrigger(t => !t) } />
+        <Map mapId={privateMapID} trigger={trigger} onPostCreateSuccess={ () => setTrigger(t => !t) } isLoggedIn={isLoggedIn} />
       </LoadScriptNext>
     </div>
   </>;

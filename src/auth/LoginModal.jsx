@@ -5,8 +5,14 @@ import { useAuthState } from './useAuthState';
 import './loginModal.css';
 
 export default function LoginModal({ isOpen, onClose, onLogin }) {
+  // ALL HOOKS MUST BE CALLED FIRST (before any returns)
+  
   // Get the current auth state
   const { user, loading } = useAuthState();
+
+  // Form state for email and password - MOVED UP HERE
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   // Auto-close if user becomes logged in while modal is open
   useEffect(() => {
@@ -16,14 +22,11 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
     }
   }, [user, isOpen, onClose]);
 
+  
   // Don't render anything if modal is not open
   if (!isOpen) {
     return null;
   }
-
-  // Form state for email and password
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
 
   // Handle form submission (for now, just prevent default)
   const handleSubmit = (e) => {
@@ -37,11 +40,11 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
         <h2>Sign Up</h2>
         
         {/* Google Login Button */}
-        {onLogin && (
+        
           <button className="modal-button" onClick={onLogin}>
             Continue with Google
           </button>
-        )}
+        
 
         {/* Email/Password Form */}
         <form onSubmit={handleSubmit}>
