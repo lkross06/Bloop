@@ -4,10 +4,12 @@ import ReactDOM from "react-dom/client";
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
 import DBHandler from "./DBHandler"
 
+import LoginModal from "./auth/LoginModal";
+
 const DB = new DBHandler();
 
 //TODO: REPLACE WITH SESSION DATA
-var login = false;
+//var login = false;
 const accountID = 41;
 
 const privateApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
@@ -960,14 +962,19 @@ export default function App() {
   //markers. specifically when a post or location is created
   const [trigger, setTrigger] = useState(true);
 
+  // keeps track of whether the login is open or not
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  // keeps track of whether the user is actually logged in or not 
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   //asynchronously trigger so it runs after the App renders
-  setTimeout( () => {
-    if (!login){
+  useEffect( () => {
+    if (!isLoggedIn){
       openBanner(
         "login-banner",
         <p>Currently this page is read-only. <span className="login-button" onClick={() => {
-          closeBanner("login-banner");
-          login = true;
+          closeBanner("login-banner"); // closes the banner
+          setIsLoginOpen(true); // shows the popup
         }}>Login</span> to create posts.</p>,
         "indianred"
       );
@@ -975,6 +982,11 @@ export default function App() {
   }, 0);
 
   return <>
+    {/* Login popup controlled by isLoginOpen */}
+    <LoginModal 
+      open={isLoginOpen}
+      onClose={() => setIsLoginOpen(false)}
+    />
     <div className="overlay">
       <h1 id="app-title" className="overlay">bloop</h1>
       <span className="overlay-buttons">
