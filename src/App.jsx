@@ -965,6 +965,76 @@ function AboutText(){
 }
 
 /**
+ * React component text showing account information and posts made by that account
+ * @returns HTML text content
+ */
+function AccountPage(){
+  if (!login){
+    return <>
+      <div className="account-page">
+        <p>Login to view account information!</p>
+      </div>
+    </>
+  }
+
+  //placeholder information
+  const [account, setAccount] = useState({
+    accountID: 0,
+    username: "--",
+    password: "--",
+    posts: []
+  });
+
+  const [posts, setPosts] = useState([])
+
+  useEffect(() => {
+    const a = DB.getAccount(accountID);
+    if (a != null) setAccount(a);
+  }, []);
+
+  useEffect(() => {
+    const ps = [];
+
+    //try to load all posts
+    for (const postID of account.posts){
+      var p = DB.getPost(postID);
+      if (p != null){
+        //try to load location info to get location name of that post
+        const rating = Math.floor((p.cleanliness + p.availability + p.amenities) / 3);
+        const l = DB.getLocation(p.locationID);
+        if (l != null){
+          p.locationTitle = l.title;
+          p.rating = rating;
+          ps.push(p);
+        }
+      }
+    }
+    setPosts(ps);
+  }, [account]);
+
+  return <>
+    <div className="account-page">
+      <div className="account-page-header">
+        <h2>{account.username}</h2>
+        <h3>{posts.length} posts</h3>
+      </div>
+
+      <div className="account-page-list">
+        {
+          posts.map((post, index) => (
+            <div className="account-page-item">
+              <h4>{post.locationTitle}</h4>
+              <StarRating rating={post.rating} />
+              {(post.notes.length < 1)? <p className="no-notes">No notes</p> : <p>{post.notes}</p> }
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </>
+}
+
+/**
  * React App component for containing all React components in our application
  * @returns React component main container
  */
@@ -1066,6 +1136,9 @@ export default function App() {
         } />
         <OverlayButton onClick={() => { openModal(<AboutText />); }} content={
           <p>?</p>
+        } />
+        <OverlayButton onClick={() => { openModal(<AccountPage />); }} content={
+          <p>•</p>
         } />
       </span>
     </div>
