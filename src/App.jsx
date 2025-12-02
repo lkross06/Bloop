@@ -9,7 +9,7 @@ import LoginModal from "./auth/LoginModal";
 import {useAuthState} from "./auth/useAuthState";
 
 // used for log in with google and log out
-import { signInWithPopup, signOut } from "firebase/auth";
+import { signInWithPopup, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth, googleProvider } from "./firebase";
 
 // authenticating user
@@ -1003,6 +1003,19 @@ export default function App() {
     }
   }
 
+  const handleEmailSignUp = async(email,password) => {
+    try {
+      const created = await createUserWithEmailAndPassword(auth, email, password);
+      const user = created.user;
+
+      await ensureUserDoc(user);
+      setIsLoginOpen(false);
+    } catch(err) {
+      console.error("Email sign up error:", err);
+      alert("Sign up failed: " + (err?.message ?? String(err)));
+    }
+  }
+
   //asynchronously trigger so it runs after the App renders
   useEffect( () => {
     //only show banner if not loading and not logged in
@@ -1043,6 +1056,7 @@ export default function App() {
       isOpen={isLoginOpen}
       onClose={() => setIsLoginOpen(false)}
       onGoogleLogin={handleGoogleLogin}
+      onEmailSignUp={handleEmailSignUp}
     />
     <div className="overlay">
       <h1 id="app-title" className="overlay">bloop</h1>

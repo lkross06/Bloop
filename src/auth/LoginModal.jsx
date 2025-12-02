@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuthState } from './useAuthState';
 import './loginModal.css';
 
-export default function LoginModal({ isOpen, onClose, onGoogleLogin }) {
+export default function LoginModal({ isOpen, onClose, onGoogleLogin, onEmailSignUp }) {
   // ALL HOOKS MUST BE CALLED FIRST (before any returns)
   
   // Get the current auth state
@@ -31,7 +31,9 @@ export default function LoginModal({ isOpen, onClose, onGoogleLogin }) {
   // Handle form submission (for now, just prevent default)
   const handleSubmit = (e) => {
     e.preventDefault();
-    // TODO: Implement sign-up logic later
+    if(!onEmailSignUp)
+        return;
+    onEmailSignUp(email,password);
   };
 
   return (
