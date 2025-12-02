@@ -1,15 +1,432 @@
-body {
-    margin: 0;
-    padding: 0;
+:root{
+  /* theme colors */
+  --col-primary: slateblue;
+  --col-primary-dark: darkslateblue;
+
+  --col-secondary: aliceblue;
+  --col-secondary-light: white;
+
+  --col-text-primary: #333;
+  --col-text-secondary: slategray;
+  
+  --col-failure: indianred;
+  --col-success: mediumseagreen;
+  --col-disabled: dimgrey;
+
+  --col-stars-full: goldenrod;
+  --col-stars-empty: lightgrey;
+
+  --col-male: dodgerblue;
+  --col-female: indianred;
+  --col-non-binary: slategray;
 }
+
+html {
+  font-family: system-ui, sans-serif;
+  font-size: 18px;
+  color: var(--col-text-primary);
+  user-select: none;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.overlay * {
+  z-index: 5;
+  position: absolute;
+
+  font-weight: 1000;
+}
+
+.overlay-buttons {
+  bottom: 3.5rem;
+  left: 3.5rem;
+
+  height: 10%;
+
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+}
+
+.overlay-button {
+  position: relative;
+
+  font-size: 2.5rem;
+  width: 100px;
+  height: 100px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background-color: var(--col-primary);
+  color: var(--col-secondary);
+
+  padding: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  border: none;
+  border-radius: 50px;
+
+  cursor: pointer;
+}
+
+.overlay-button:active {
+  background-color: var(--col-primary-dark);
+}
+
+#app-title {
+  top: 4.5rem;
+  /* janky centering method */
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  font-size: 4rem;
+  color: var(--col-primary);
+
+  /* easier to see on background */
+  text-shadow: 0 0 10px white;
+}
+
+.map-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+
+  width: 100%;
+  height: 100%;
+}
+
+.about {
+  width: 40rem;
+}
+
+/* ------ MODAL -------------- */
+
+#modal-container {
+  position: fixed;
+  background: rgba(0, 0, 0, 0.25);
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#modal-body {
+  background-color: var(--col-secondary-light);
+  min-width: 40%;
+  min-height: 40%;
+
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* header */
+.modal-header {
+  grid-column: 1 / 3;
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
+  color: var(--col-text-primary);
+  padding-bottom: 0.25rem;
+}
+
+.modal-header * {
+  margin: 0;
+}
+
+.modal-subheader {
+  margin: 0.5rem;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--col-text-secondary);
+}
+
+
+/* ------ BANNER ------- */
+
+.banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 10;
+}
+
+.banner-container {
+  padding: 0.75rem 1rem;
+  user-select: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--col-secondary-light);
+  font-size: 1rem;
+  text-align: center;
+  font-weight: 700;
+
+  /* start above the screen ready to slide down */
+  transform: translateY(-100%);
+  transition: transform 1s ease;
+}
+
+/* slide down */
+.banner-container.open {
+  transform: translateY(0);
+}
+
+.banner-container p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.login-button {
+  cursor: pointer;
+  font-weight: 1000;
+  text-decoration: none;
+}
+
+.login-button:hover {
+  text-decoration: underline;
+}
+
+/* ------- LOCATION MARKER POP-UP ------- */
 
 .location-popup {
-    background-color: white;
-    padding: 5%;
-    width: 200px;
-    height: 160px;
+  background-color: var(--col-secondary-light);
+  padding: 1.5rem;
+  width: 400px;
+  font-size: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr 1fr;
+  /* gap: 0.75rem 1.25rem; */
 }
 
-.location-popup-list {
-    list-style-type: none; /* don't show tick marks */
+.location-popup p {
+  /* margin: 0 0 0.6rem 0; */
+  font-weight: 500;
+  color: var(--col-text-primary);
 }
+
+/* reviews section */
+.location-popup-reviews {
+  grid-row: 2 / 3;
+  grid-column: 1 / 2;
+  
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 0;
+
+  text-align: right;
+  align-items: center;
+  justify-content: center;
+
+  margin: 1rem 0 1.5rem 0;
+}
+
+/* ratings summary section */
+.location-popup-attributes {
+  grid-row: 2 / 3;
+  grid-column: 2 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.location-popup-attributes h4 {
+  font-size: 1.5rem;
+  margin: 0.25rem 0;
+  font-weight: 500;
+}
+
+.location-popup-attributes > h4:first-child {
+    font-size: 3rem;
+}
+
+/* create post button */
+.location-popup-button, .create-form-submit {
+  grid-column: 1 / 3;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  background-color: var(--col-primary);
+  color: var(--col-secondary);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.location-popup-button:hover, .create-form-submit:hover {
+  background-color: var(--col-primary-dark);
+}
+
+.location-popup-button:disabled {
+  background-color: var(--col-disabled);
+}
+
+/* other React components */
+
+.full-stars {
+  color: var(--col-stars-full);
+}
+
+.empty-stars {
+  color: var(--col-stars-empty);
+}
+
+.male {
+    color: var(--col-male);
+}
+
+.female {
+    color: var(--col-female);
+}
+
+.non-binary {
+    color: var(--col-non-binary);
+}
+
+/* ------- CREATE FORMS ------- */
+
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem;
+  margin: 0 auto;
+  min-width: 20rem;
+  width: 30rem;
+  font-size: 1rem;
+}
+
+.create-form-rating {
+  font-size: 3rem;
+  margin-top: 1rem;
+}
+
+.create-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.create-form-label {
+  font-weight: 500;
+}
+
+.create-form-slider {
+  width: 100%;
+  accent-color: var(--col-primary-dark);
+}
+
+.create-form-submit:disabled {
+  background-color: var(--col-disabled);
+}
+
+.slider-value {
+  text-align: right;
+  color: var(--col-text-secondary);
+}
+
+.create-form-textarea {
+  resize: none;
+  min-height: 80px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--col-text-secondary);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.create-form-text {
+  height: 60px;
+  padding: 0 0.5rem;
+  border: 1px solid var(--col-text-secondary);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.required-asterisk {
+  color: var(--col-failure);
+  font-weight: 500;
+}
+
+.gender-radio-row {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  place-items: center;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.gender-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1.2rem;
+}
+
+.gender-option span {
+  padding: 0.5rem 1.8rem;
+  border-radius: 2rem;
+
+  /* fade-in animation */
+  transition: 
+    background-color 0.3s ease,
+    color 0.3s ease,
+    opacity 0.3s ease;
+  opacity: 0.7;
+}
+
+.gender-option span:hover {
+  cursor: pointer;
+  opacity: 1; 
+}
+
+.gender-option input{
+  display:none;
+}
+
+/* the label for the radio button */
+.gender-option input:checked ~ span {
+  background-color: var(--col-primary);
+  color: var(--col-secondary);
+}
+
+.gender-option input#M:checked ~ span {
+  background-color: var(--col-male);
+  color: var(--col-secondary);
+  opacity: 1;
+}
+
+.gender-option input#F:checked ~ span {
+  background-color: var(--col-female);
+  color: var(--col-secondary);
+  opacity: 1;
+}
+.gender-option input#N:checked ~ span {
+  background-color: var(--col-non-binary);
+  color: var(--col-secondary);
+  opacity: 1;
+}
+
