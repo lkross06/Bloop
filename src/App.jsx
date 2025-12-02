@@ -12,6 +12,9 @@ import {useAuthState} from "./auth/useAuthState";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { auth, googleProvider } from "./firebase";
 
+// authenticating user
+import { ensureUserDoc } from "./auth/ensureUserDoc"
+
 
 const DB = new DBHandler();
 
@@ -979,13 +982,15 @@ export default function App() {
   const handleGoogleLogin = async () => {
     try
     {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      await ensureUserDoc(user);
       setIsLoginOpen(false);
     }
     catch(err)
     {
       console.error("Google login failed", err);
-      alert("Google login failed: " + err.mesage);
+      alert("Google login failed: " + (err?.message ?? err?.code ?? String(err)));
     }
   }
 
