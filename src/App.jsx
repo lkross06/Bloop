@@ -4,6 +4,10 @@ import ReactDOM from "react-dom/client";
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
 const GOOGLE_LIBRARIES = ["marker"];
 
+import addIcon from "./media/add.svg";
+import aboutIcon from "./media/about.svg";
+import userIcon from "./media/user.svg";
+
 import DBHandler from "./DBHandler"
 const DB = new DBHandler();
 
@@ -1132,13 +1136,13 @@ export default function App() {
             </LoadScriptNext>
           );
         }} content={
-          <p>＋</p>
+          <img src={addIcon} alt="Add icon" />
         } />
         <OverlayButton onClick={() => { openModal(<AboutText />); }} content={
-          <p>?</p>
+          <img src={aboutIcon} alt="About icon" />
         } />
         <OverlayButton onClick={() => { openModal(<AccountPage />); }} content={
-          <p>•</p>
+          <img src={userIcon} alt="User icon" />
         } />
       </span>
     </div>
