@@ -1,6 +1,6 @@
 :root{
   /* theme colors */
-  --col-primary: slateblue;
+  --col-primary: #6a5acd;
   --col-primary-dark: darkslateblue;
 
   --col-secondary: aliceblue;
@@ -513,4 +513,13 @@ body {
 .account-page-item p.no-notes {
   font-style: italic;
   color: var(--col-disabled);
+}
+
+.profile-icon{
+  width: 430px; 
+  height: 430px;
+  object-fit: contain;
+  display: block;
+  margin: auto;  
+  transform: translate(15px,44px);
 }

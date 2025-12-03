@@ -7,6 +7,8 @@ const GOOGLE_LIBRARIES = ["marker"];
 import DBHandler from "./DBHandler"
 const DB = new DBHandler();
 
+import profileIcon from "./assets/profile.png";
+
 //TODO: REPLACE WITH SESSION DATA
 var login = false;
 const accountID = 41;
@@ -1138,7 +1140,11 @@ export default function App() {
           <p>?</p>
         } />
         <OverlayButton onClick={() => { openModal(<AccountPage />); }} content={
-          <p>•</p>
+          <img 
+              className="profile-icon"
+              src={profileIcon}
+              alt="Account"
+          />
         } />
       </span>
     </div>
