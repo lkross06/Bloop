@@ -1079,6 +1079,13 @@ export default function App() {
       const user = result.user;
       await ensureUserDoc(user);
       setIsLoginOpen(false);
+
+      openBanner(
+        "login-banner",
+        <p>Login successful.</p>,
+        "mediumseagreen",
+        5000
+      );
     }
     catch(err)
     {
@@ -1090,6 +1097,12 @@ export default function App() {
   const handleLogout = async () => {
     try{
       await signOut(auth);
+      openBanner(
+        "logout-banner",
+        <p>Logout successful.</p>,
+        "mediumseagreen",
+        5000
+      );
     }
     catch(err){
       console.error("Logout fauled", err);
@@ -1103,6 +1116,13 @@ export default function App() {
 
       await ensureUserDoc(user);
       setIsLoginOpen(false);
+
+      openBanner(
+        "login-banner",
+        <p>Login successful.</p>,
+        "mediumseagreen",
+        5000
+      );
     } catch(err) {
       console.error("Email sign up error:", err);
       alert("Sign up failed: " + (err?.message ?? String(err)));
@@ -1124,42 +1144,39 @@ export default function App() {
     }
   }, [loading, isLoggedIn]); //Dependency array to re-run effect when loading or isLoggedIn changes
 
+  function pingLocation() {
+    if (!navigator.geolocation) {
+      console.warn("Geolocation is not supported");
+      return;
+    }
+
+    /**
+     * DESIGN DECISION
+     * https://stackoverflow.com/questions/46573591/watchposition-vs-getcurrentposition-in-geolocation
+     * Using getCurrentPosition instead of watchPosition because device location is not a core feature,
+     * and watchPosition consume much more battery staying constantly active than sending an asynchronous
+     * ping every n seconds.
+     */
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setDeviceLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        })
+      },
+      (err) => {},
+      {
+        enableHighAccuracy: true,
+        timeout: 5000 //try to poll API for 5s at a time
+    });
+
+    //ping GPS module again after timeout
+    setTimeout(pingLocation, geolocationPingTimeout * 1000);
+  };
+
   //TRY TO FIND THEIR LOCATION AS QUICKLY AS POSSIBLE WHEN THE USER FIRST INTERACTS WITH THE PAGE
   useEffect(() => {
-    const pingLocation = () => {
-      if (!navigator.geolocation) {
-        console.warn("Geolocation is not supported");
-        window.removeEventListener("click", pingLocation);
-        return;
-      }
-
-      /**
-       * DESIGN DECISION
-       * https://stackoverflow.com/questions/46573591/watchposition-vs-getcurrentposition-in-geolocation
-       * Using getCurrentPosition instead of watchPosition because device location is not a core feature,
-       * and watchPosition consume much more battery staying constantly active than sending an asynchronous
-       * ping every n seconds.
-       */
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setDeviceLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          })
-        },
-        (err) => {},
-        {
-          enableHighAccuracy: true,
-          timeout: 5000 //try to poll API for 5s at a time
-      });
-
-      window.removeEventListener("load", pingLocation);
-
-      //ping GPS module again after timeout
-      setTimeout(pingLocation, geolocationPingTimeout * 1000);
-    };
-
-    window.addEventListener("load", pingLocation); //onload, ping GPS module once
+    pingLocation();
   }, []);
 
   /**
