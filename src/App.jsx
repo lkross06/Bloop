@@ -481,6 +481,8 @@ function Map({ mapId, trigger, setTrigger, deviceLocation, isLoggedIn }) {
   useEffect(() => {
     if (mapInstance == null || trigger == null) return;
 
+    console.log(trigger);
+
     /* HERE WE EXPECT TRIGGER = LOCATION ID TO UPDATE */
 
     if (markersDict.current[trigger] != null){
@@ -1191,7 +1193,7 @@ export default function App() {
           libraries={["marker"]}
           mapIds={[privateMapID]}
         >
-          <LocationCreateForm onSuccess={() => setTrigger(t => !t)} isLoggedIn={isLoggedIn} />
+          <LocationCreateForm onSuccess={setTrigger} isLoggedIn={isLoggedIn} />
         </LoadScriptNext>
       );
     } else {
@@ -1249,7 +1251,7 @@ export default function App() {
         libraries={GOOGLE_LIBRARIES}
         mapIds={[privateMapID]}
       >
-        <Map mapId={privateMapID} trigger={trigger} setTrigger={ () => setTrigger(t => !t) } deviceLocation={deviceLocation} isLoggedIn={isLoggedIn} />
+        <Map mapId={privateMapID} trigger={trigger} setTrigger={setTrigger} deviceLocation={deviceLocation} isLoggedIn={isLoggedIn} />
       </LoadScriptNext>
     </div>
   </>;
