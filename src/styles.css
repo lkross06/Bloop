@@ -40,7 +40,7 @@ body {
   font-weight: 1000;
 }
 
-.overlay-buttons {
+.overlay-buttons-left {
   bottom: 3.5rem;
   left: 3.5rem;
 
@@ -48,6 +48,17 @@ body {
 
   display: flex;
   flex-direction: row;
+  gap: 2rem;
+}
+
+.overlay-buttons-right {
+  bottom: 3.5rem;
+  right: 3.5rem;
+
+  height: 10%;
+
+  display: flex;
+  flex-direction: row-reverse;
   gap: 2rem;
 }
 

@@ -973,14 +973,6 @@ function AboutText(){
  * @returns HTML text content
  */
 function AccountPage(){
-  if (!login){
-    return <>
-      <div className="account-page">
-        <p>Login to view account information!</p>
-      </div>
-    </>
-  }
-
   //placeholder information
   const [account, setAccount] = useState({
     accountID: 0,
@@ -1124,7 +1116,7 @@ export default function App() {
   return <>
     <div className="overlay">
       <h1 id="app-title" className="overlay">bloop</h1>
-      <span className="overlay-buttons">
+      <span className="overlay-buttons-left">
         <OverlayButton onClick={() => {
           openModal(
             <LoadScriptNext 
@@ -1138,11 +1130,24 @@ export default function App() {
         }} content={
           <img src={addIcon} alt="Add icon" />
         } />
-        <OverlayButton onClick={() => { openModal(<AboutText />); }} content={
-          <img src={aboutIcon} alt="About icon" />
-        } />
-        <OverlayButton onClick={() => { openModal(<AccountPage />); }} content={
+        <OverlayButton onClick={() => {
+          if (!login){
+            openBanner(
+              "account-page", 
+              <p>Please login to see account information.</p>,
+              "indianred",
+              5000
+            );
+          } else {
+            openModal(<AccountPage />);
+          }
+        }} content={
           <img src={userIcon} alt="User icon" />
+        } />
+      </span>
+      <span className="overlay-buttons-right">
+         <OverlayButton onClick={() => { openModal(<AboutText />); }} content={
+          <img src={aboutIcon} alt="About icon" />
         } />
       </span>
     </div>
