@@ -1,16 +1,28 @@
 import { useRef, useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 
+
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
 const GOOGLE_LIBRARIES = ["marker"];
 
 import DBHandler from "./DBHandler"
+import LoginModal from "./auth/LoginModal";
+import {useAuthState} from "./auth/useAuthState";
+
+// used for log in with google and log out
+import { signInWithPopup, createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { auth, googleProvider } from "./firebase";
+
+// authenticating user
+import { ensureUserDoc } from "./auth/ensureUserDoc"
+
+
 const DB = new DBHandler();
 
 import profileIcon from "./assets/profile.png";
 
 //TODO: REPLACE WITH SESSION DATA
-var login = false;
+//var login = false;
 const accountID = 41;
 
 const privateApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
@@ -253,7 +265,14 @@ function openModal(modalContent){
  * @param {Function} onSuccess callback function to trigger Map to re-render
  * @returns HTMLDivElement that can be rendered straight onto the Google Maps
  */
-function LocationPopUp(location, posts, onSuccess) {
+function LocationPopUp(location, posts, onSuccess, isLoggedIn) {
+  function createPostModal(){
+    //open a create form with this modal
+    openModal(
+      <PostCreateForm location={location} onSuccess={onSuccess} />
+    );
+  }
+
   let cleanliness_sum = 0;
   let availability_sum = 0;
   let amenities_sum = 0;
@@ -313,12 +332,9 @@ function LocationPopUp(location, posts, onSuccess) {
       </span>
 
       {
-      (login)? 
-        <button className="location-popup-button" onClick={ () => {
-          openModal(
-            <PostCreateForm location={location} onSuccess={onSuccess} />
-          );
-        }}>Create Post</button> : 
+      //we're going to need to verify this manually when we send to the server
+      (isLoggedIn)? 
+        <button className="location-popup-button" onClick={createPostModal}>Create Post</button> : 
         <button className="location-popup-button" disabled>Create Post</button>
       }
     </>
@@ -427,8 +443,10 @@ function MapSmall({ mapId, updateParentLocation }) {
  * @param {JSON} props { mapId, trigger, setTrigger, deviceLocation }, mapId = private Map ID, trigger = trigger variable to watch --> re-render marker, setTrigger = callback function that takes locationID and updates marker with that location, deviecLocation = {lat, lng} corresponding to most recent device's location
  * @returns interactable Google Maps React component
  */
-function Map({ mapId, trigger, setTrigger, deviceLocation }) {
-  const mapRef = useRef(null);
+function Map({ mapId, trigger, setTrigger, deviceLocation, isLoggedIn }) {
+  //the map takes a second to load from the API to we keep references to it
+  //instead of just creating a new object for it
+  const mapRef = useRef(null); //references will persist across re-renders of this component
   const [mapInstance, setMapInstance] = useState(null);
   
   const activeMarker = useRef(null); //currently selected marker with a pop-up
@@ -588,8 +606,7 @@ function Map({ mapId, trigger, setTrigger, deviceLocation }) {
             //on successful post creation, trigger a re-render
             setTrigger(locationID);
             mapInstance.panTo({lat: marker.position.lat + 0.003, lng: marker.position.lng})
-          });
-
+          }, isLoggedIn); //pass in isLoggedIn to the LocationPopUp function
           marker.zIndex = 3;
           marker.state = "popup"
 
@@ -1044,21 +1061,64 @@ export default function App() {
   const [trigger, setTrigger] = useState(null); //set to a locationID to trigger that location marker to update
   const [deviceLocation, setDeviceLocation] = useState(null); //contains {lat, lng}
 
-  //asynchronously call after App renders
-  useEffect(() => {
-    //TODO: manually verify on back-end
-    if (!login){
+  // keeps track of whether the login is open or not
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  // keeps track of whether the user is actually logged in or not 
+  const { user, loading } = useAuthState();
+  //convert user to boolean- true if logged in, false if not
+  const isLoggedIn = !!user;
+
+  const handleGoogleLogin = async () => {
+    try
+    {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      await ensureUserDoc(user);
+      setIsLoginOpen(false);
+    }
+    catch(err)
+    {
+      console.error("Google login failed", err);
+      alert("Google login failed: " + (err?.message ?? err?.code ?? String(err)));
+    }
+  }
+
+  const handleLogout = async () => {
+    try{
+      await signOut(auth);
+    }
+    catch(err){
+      console.error("Logout fauled", err);
+    }
+  }
+
+  const handleEmailSignUp = async(email,password) => {
+    try {
+      const created = await createUserWithEmailAndPassword(auth, email, password);
+      const user = created.user;
+
+      await ensureUserDoc(user);
+      setIsLoginOpen(false);
+    } catch(err) {
+      console.error("Email sign up error:", err);
+      alert("Sign up failed: " + (err?.message ?? String(err)));
+    }
+  }
+
+  //asynchronously trigger so it runs after the App renders
+  useEffect( () => {
+    //only show banner if not loading and not logged in
+    if (!loading && !isLoggedIn){
       openBanner(
         "login-banner",
         <p>Currently this page is read-only. <span className="login-button" onClick={() => {
-          closeBanner("login-banner");
-          login = true;
+          closeBanner("login-banner"); // closes the banner
+          setIsLoginOpen(true); // shows the popup
         }}>Login</span> to create posts.</p>,
         "indianred"
       );
     }
-
-  }, []);
+  }, [loading, isLoggedIn]); //Dependency array to re-run effect when loading or isLoggedIn changes
 
   //TRY TO FIND THEIR LOCATION AS QUICKLY AS POSSIBLE WHEN THE USER FIRST INTERACTS WITH THE PAGE
   useEffect(() => {
@@ -1119,21 +1179,45 @@ export default function App() {
 
   hideInfoWindow();
 
+  //handle plus button click
+  const handlePlusClick = () => {
+    if (isLoggedIn) {
+      //show location create form
+      openModal(
+        <LoadScriptNext 
+          googleMapsApiKey={privateApiKey}
+          libraries={["marker"]}
+          mapIds={[privateMapID]}
+        >
+          <LocationCreateForm onSuccess={() => setTrigger(t => !t)} />
+        </LoadScriptNext>
+      );
+    } else {
+      // User is NOT logged in - show login modal instead
+      setIsLoginOpen(true);
+    }
+  };
+
   return <>
+    {/* Login popup controlled by isLoginOpen */}
+    <LoginModal 
+      isOpen={isLoginOpen}
+      onClose={() => setIsLoginOpen(false)}
+      onGoogleLogin={handleGoogleLogin}
+      onEmailSignUp={handleEmailSignUp}
+    />
     <div className="overlay">
       <h1 id="app-title" className="overlay">bloop</h1>
+
+      {isLoggedIn && (
+        <button className="logout-button" onClick={handleLogout}>
+          Logout
+        </button>
+      )}
+
       <span className="overlay-buttons">
-        <OverlayButton onClick={() => {
-          openModal(
-            <LoadScriptNext 
-              googleMapsApiKey={privateApiKey}
-              libraries={GOOGLE_LIBRARIES}
-              mapIds={[privateMapID]}
-            >
-              <LocationCreateForm onSuccess={ (locationID) => setTrigger(locationID) } deviceLocation={deviceLocation} />
-            </LoadScriptNext>
-          );
-        }} content={
+        <OverlayButton onClick={handlePlusClick} 
+        content={
           <p>＋</p>
         } />
         <OverlayButton onClick={() => { openModal(<AboutText />); }} content={
@@ -1154,7 +1238,7 @@ export default function App() {
         libraries={GOOGLE_LIBRARIES}
         mapIds={[privateMapID]}
       >
-        <Map mapId={privateMapID} trigger={trigger} setTrigger={setTrigger} deviceLocation={deviceLocation} />
+        <Map mapId={privateMapID} trigger={trigger} setTrigger={ () => setTrigger(t => !t) } deviceLocation={deviceLocation} isLoggedIn={isLoggedIn} />
       </LoadScriptNext>
     </div>
   </>;

@@ -523,3 +523,22 @@ body {
   margin: auto;  
   transform: translate(15px,44px);
 }
+.logout-button{
+  position: fixed;
+  top:16px;
+  right: 16px;
+  z-index: 2000;
+  
+  background: indianred;
+  color: white;
+  border: none;
+
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
