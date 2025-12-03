@@ -8,7 +8,7 @@ import {
 const router = express.Router();
 
 router.get("/", getAllLocations);
-router.get("/:id", getLocationById);
+router.get("/:locationID", getLocationById);
 router.post("/", createLocation);
 
 export default router;

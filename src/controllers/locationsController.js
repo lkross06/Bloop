@@ -1,5 +1,10 @@
 import { db } from "../admin.js";
 
+/**
+ * GET http://localhost:3000/api/locations/
+ * Get all locations from database
+ * @returns list of JSONs representing all locations
+ */
 export const getAllLocations = async (req, res) => {
   try {
     const snapshot = await db.collection("locations").get();
@@ -13,9 +18,15 @@ export const getAllLocations = async (req, res) => {
   }
 };
 
+/**
+ * GET http://localhost:3000/api/locations/:locationID
+ * Get a location by ID from database
+ * @param {*} req.params.locationID unique identifier for this location
+ * @returns JSON representing the location
+ */
 export const getLocationById = async (req, res) => {
   try {
-    const docRef = db.collection("locations").doc(req.params.id);
+    const docRef = db.collection("locations").doc(req.params.locationID);
     const docSnap = await docRef.get();
 
     if (!docSnap.exists)
@@ -27,21 +38,26 @@ export const getLocationById = async (req, res) => {
   }
 };
 
+/**
+ * POST http://localhost:3000/api/locations/
+ * Create a new location in the database
+ * @param {*} req.body JSON representing the new location
+ * @returns ID of the newly created location
+ */
 export const createLocation = async (req, res) => {
   try {
-    const { title, gender, lat, lng, ratings } = req.body;
+    let { title, gender, lat, lng} = req.body;
+
+    if (gender === "male") gender = "M";
+    else if (gender === "female") gender = "F";
+    else gender = "N";     
 
     const newDoc = await db.collection("locations").add({
       title,
       gender,
-      lat,
-      lng,
+      lat: Number(lat),
+      lng: Number(lng),
       posts: [],
-      ratings: ratings || {
-        cleanliness: 0,
-        availability: 0,
-        amenities: 0
-      }
     });
 
     res.json({ id: newDoc.id });
