@@ -5,6 +5,10 @@ import ReactDOM from "react-dom/client";
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
 const GOOGLE_LIBRARIES = ["marker"];
 
+import addIcon from "./media/add.svg";
+import aboutIcon from "./media/about.svg";
+import userIcon from "./media/user.svg";
+
 import DBHandler from "./DBHandler"
 import LoginModal from "./auth/LoginModal";
 import {useAuthState} from "./auth/useAuthState";
@@ -988,14 +992,6 @@ function AboutText(){
  * @returns HTML text content
  */
 function AccountPage(){
-  if (!login){
-    return <>
-      <div className="account-page">
-        <p>Login to view account information!</p>
-      </div>
-    </>
-  }
-
   //placeholder information
   const [account, setAccount] = useState({
     accountID: 0,
@@ -1215,21 +1211,30 @@ export default function App() {
         </button>
       )}
 
-      <span className="overlay-buttons">
+      <span className="overlay-buttons-left">
         <OverlayButton onClick={handlePlusClick} 
         content={
-          <p>＋</p>
+          <img src={addIcon} alt="Add icon" />
         } />
-        <OverlayButton onClick={() => { openModal(<AboutText />); }} content={
-          <p>?</p>
+        <OverlayButton onClick={() => {
+          if (!login){
+            openBanner(
+              "account-page", 
+              <p>Please login to see account information.</p>,
+              "indianred",
+              5000
+            );
+          } else {
+            openModal(<AccountPage />);
+          }
+        }} content={
+          <img src={userIcon} alt="User icon" />
         } />
+      </span>
+      <span className="overlay-buttons-right">
         <OverlayButton onClick={() => { openModal(<AccountPage />); }} content={
-          <img 
-              className="profile-icon"
-              src={profileIcon}
-              alt="Account"
-          />
-        } />
+            <img src={aboutIcon} alt="About icon" />
+          } />
       </span>
     </div>
     <div className="map-container">
