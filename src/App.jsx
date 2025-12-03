@@ -20,13 +20,10 @@ import { auth, googleProvider } from "./firebase";
 // authenticating user
 import { ensureUserDoc } from "./auth/ensureUserDoc"
 
-
 const DB = new DBHandler();
 
-import profileIcon from "./assets/profile.png";
-
 //TODO: REPLACE WITH SESSION DATA
-//var login = false;
+// var login = false;
 const accountID = 41;
 
 const privateApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
@@ -848,15 +845,24 @@ function PostCreateForm({ location, onSuccess }){
 
 /**
  * React component form for creating a new Location
- * @param {JSON} props { onSuccess, deviceLocation }, onSuccess = callback function to re-render map with new location, deviceLocation = {lat,lng} containing device's last-known location
+ * @param {JSON} props { onSuccess, deviceLocation, isLoggedIn }, onSuccess = callback function to re-render map with new location, deviceLocation = {lat,lng} containing device's last-known location, isLoggedIn = true if user is logged in, false otherwise
  * @returns form React component
  */
-function LocationCreateForm({ onSuccess, deviceLocation }){
+function LocationCreateForm({ onSuccess, deviceLocation, isLoggedIn }){
   const maxNameLength = 30;
 
   const [name, setName] = useState("");
   const [gender, setGender] = useState("");
   const [location, setLocation] = useState(null);
+
+  const [enableSubmit, setEnableSubmit] = useState(false);
+
+  useEffect(() => {
+    if (name == "" || gender == "" || location == null) return;
+    if (!isLoggedIn) return;
+
+    setEnableSubmit(true);
+  }, [name, gender, location]);
 
   function handleSubmit(e) {
     e.preventDefault(); //do not reload the page
@@ -954,7 +960,7 @@ function LocationCreateForm({ onSuccess, deviceLocation }){
 
       {
         //TODO: manually verify on back-end
-        (login)? 
+        (enableSubmit)? 
           <button type="submit" className="create-form-submit">Create Location</button> : 
           <button type="submit" className="create-form-submit" disabled>Create Location</button>
       }
@@ -1185,7 +1191,7 @@ export default function App() {
           libraries={["marker"]}
           mapIds={[privateMapID]}
         >
-          <LocationCreateForm onSuccess={() => setTrigger(t => !t)} />
+          <LocationCreateForm onSuccess={() => setTrigger(t => !t)} isLoggedIn={isLoggedIn} />
         </LoadScriptNext>
       );
     } else {
@@ -1217,7 +1223,7 @@ export default function App() {
           <img src={addIcon} alt="Add icon" />
         } />
         <OverlayButton onClick={() => {
-          if (!login){
+          if (!isLoggedIn){
             openBanner(
               "account-page", 
               <p>Please login to see account information.</p>,
@@ -1232,7 +1238,7 @@ export default function App() {
         } />
       </span>
       <span className="overlay-buttons-right">
-        <OverlayButton onClick={() => { openModal(<AccountPage />); }} content={
+        <OverlayButton onClick={() => { openModal(<AboutText />); }} content={
             <img src={aboutIcon} alt="About icon" />
           } />
       </span>
