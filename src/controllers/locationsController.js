@@ -10,7 +10,11 @@ export const getAllLocations = async (req, res) => {
     const snapshot = await db.collection("locations").get();
     const data = {};
 
-    snapshot.forEach(doc => (data[doc.id] = doc.data()));
+    snapshot.forEach(doc => {
+      data[doc.id] = {
+        ...doc.data()
+      };
+    });
     
     res.json(data);
   } catch (e) {
@@ -32,7 +36,10 @@ export const getLocationById = async (req, res) => {
     if (!docSnap.exists)
       return res.status(404).json({ error: "Location not found" });
 
-    res.json(docSnap.data());
+    res.json(
+      { locationID: docSnap.id, ...docSnap.data() }
+    );
+
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -58,6 +65,11 @@ export const createLocation = async (req, res) => {
       lat: Number(lat),
       lng: Number(lng),
       posts: [],
+    });
+
+    await newDoc.update({
+      id: newDoc.id,
+      locationID: newDoc.id,
     });
 
     res.json({ id: newDoc.id });

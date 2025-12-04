@@ -10,8 +10,8 @@ import {
 
 const router = express.Router();
 
-router.get("/users/:userID/locations/:locationID", getReviewByAccountAndLocation);
-router.get("/users/:userID", getReviewsByAccount);
+router.get("/users/:accountID/locations/:locationID", getReviewByAccountAndLocation);
+router.get("/users/:accountID", getReviewsByAccount);
 router.get("/locations/:locationID", getReviewsByLocation);
 router.get("/:reviewID", getReviewById);
 router.post("/", createReview);

@@ -20,47 +20,49 @@ export const getReviewById = async (req, res) => {
   }
 };
 
-/** GET http://localhost:3000/api/reviews/user/:userID/location/:locationID
+/** GET http://localhost:3000/api/reviews/users/:accountID/locations/:locationID
  * Get a review by User ID and Location ID from database
- * @param {*} req.params.userID unique identifier for account that made this review
+ * @param {*} req.params.accountID unique identifier for account that made this review
  * @param {*} req.params.locationID unique identifier for location this review is about
  * @returns JSON representing the review
  */
 export const getReviewByAccountAndLocation = async (req, res) => {
   try {
-    const { userID, locationID } = req.params;
+    const { accountID, locationID } = req.params;
 
     const snapshot = await db
       .collection("reviews")
-      .where("accountID", "==", userID)
+      .where("accountID", "==", accountID)
       .where("locationID", "==", locationID)
       .get();
     if (snapshot.empty)
       return res.status(404).json({ error: "Review not found" });
 
     const doc = snapshot.docs[0];
+    console.log("Found review:", doc.id)
+    ;
     res.json({reviewID: doc.id, ...doc.data()});
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 };
 
-/** GET http://localhost:3000/api/reviews/user/:userID
+/** GET http://localhost:3000/api/reviews/users/:accountID
  * Get all reviews by User ID from database
- * @param {*} req.params.userID unique identifier for account that made these reviews
+ * @param {*} req.params.accountID unique identifier for account that made these reviews
  * @returns list of JSONs representing all reviews made by the user
  */
 export const getReviewsByAccount = async (req, res) => {
   try {
-    const userID = req.params.userID;
+    const accountID = req.params.accountID;
     
-    if (!userID) {
-      return res.status(400).json({ error: "UserID is required" });
+    if (!accountID) {
+      return res.status(400).json({ error: "AccountID is required" });
     }
 
     const snapshot = await db
       .collection("reviews")
-      .where("accountID", "==", userID)
+      .where("accountID", "==", accountID)
       .get();
 
     const data = {};
@@ -82,8 +84,28 @@ export const createReview = async (req, res) => {
   try {
     const {locationID, accountID, cleanliness, availability, amenities, notes, timestamp} = req.body;
 
+    console.log('Creating review with:', { locationID, accountID });
+
     if (!locationID || !accountID)
-      return res.status(400).json({ error: "locationID and userID are required" });
+    return res.status(400).json({ error: "locationID and accountID are required" });
+  
+    const snapshot = await db.collection("reviews")
+      .where("locationID", "==", locationID)
+      .where("accountID", "==", accountID)
+      .limit(1)
+      .get();
+    
+    if (!snapshot.empty) {
+      const existingDoc = snapshot.docs[0];
+      await db.collection("reviews").doc(existingDoc.id).update({
+        cleanliness,
+        availability,
+        amenities,
+        notes,
+        timestamp: timestamp || Date.now()
+      });
+      return res.json({ id: existingDoc.id });
+    }
     
     const newDoc = await db.collection("reviews").add({
       locationID,

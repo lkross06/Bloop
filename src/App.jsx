@@ -24,7 +24,6 @@ const DB = new DBHandler();
 
 //TODO: REPLACE WITH SESSION DATA
 // var login = false;
-const accountID = 41;
 
 const privateApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 const privateMapID = import.meta.env.VITE_GOOGLE_MAPS_ID;
@@ -266,11 +265,11 @@ function openModal(modalContent){
  * @param {Function} onSuccess callback function to trigger Map to re-render
  * @returns HTMLDivElement that can be rendered straight onto the Google Maps
  */
-function LocationPopUp(location, posts, onSuccess, isLoggedIn) {
+function LocationPopUp(location, posts, onSuccess, isLoggedIn, accountID) {
   function createPostModal(){
     //open a create form with this modal
     openModal(
-      <PostCreateForm location={location} onSuccess={onSuccess} />
+      <PostCreateForm location={location} onSuccess={onSuccess} accountID={accountID} />
     );
   }
 
@@ -444,7 +443,7 @@ function MapSmall({ mapId, updateParentLocation }) {
  * @param {JSON} props { mapId, trigger, setTrigger, deviceLocation }, mapId = private Map ID, trigger = trigger variable to watch --> re-render marker, setTrigger = callback function that takes locationID and updates marker with that location, deviecLocation = {lat, lng} corresponding to most recent device's location
  * @returns interactable Google Maps React component
  */
-function Map({ mapId, trigger, setTrigger, deviceLocation, isLoggedIn }) {
+function Map({ mapId, trigger, setTrigger, deviceLocation, isLoggedIn, user }) {
   //the map takes a second to load from the API to we keep references to it
   //instead of just creating a new object for it
   const mapRef = useRef(null); //references will persist across re-renders of this component
@@ -472,10 +471,13 @@ function Map({ mapId, trigger, setTrigger, deviceLocation, isLoggedIn }) {
     });
     
     //draw all new markers once
-    for (const location of DB.getLocationsAll()) {
-      addMarker(location);
-    }
-  }, [mapInstance]);
+    (async () => {
+      const locations = await DB.getLocationsAll();
+      for (const location of locations) {
+        addMarker(location);
+      }
+    })();
+  }, [mapInstance, isLoggedIn]);
 
   //when the trigger tells us to update one of the location markers
   useEffect(() => {
@@ -485,13 +487,14 @@ function Map({ mapId, trigger, setTrigger, deviceLocation, isLoggedIn }) {
 
     /* HERE WE EXPECT TRIGGER = LOCATION ID TO UPDATE */
 
-    if (markersDict.current[trigger] != null){
-      markersDict.current[trigger].setMap(null);
-      delete markersDict.current[trigger];
-    }
+    (async () => {
+      if (markersDict.current[trigger] != null){
+        markersDict.current[trigger].setMap(null);
+        delete markersDict.current[trigger];
+      }
 
-    const location = DB.getLocation(trigger);
-    if (location != null) addMarker(location);
+      const location = await DB.getLocation(trigger);
+      if (location != null) await addMarker(location);
 
     /**
      * We must set back to null and re-trigger this callback (which returns immediately) here
@@ -500,8 +503,8 @@ function Map({ mapId, trigger, setTrigger, deviceLocation, isLoggedIn }) {
      * if we create a new location and immediately post about it (which very well might happen with
      * our users!). null ensures previous value != current value
      */
-    setTrigger(null);
-
+      setTrigger(null);
+    })();
   }, [trigger]);
 
   //wait for asynchronous updates from Navigator API, managed by parent React component
@@ -580,15 +583,15 @@ function Map({ mapId, trigger, setTrigger, deviceLocation, isLoggedIn }) {
      * Handle mouse click event on a Google Maps marker
      * @param {AdvancedMarkerElement} marker JS object rendered on Google Maps map triggered by event
      */
-    function handleMarkerClick(marker){
+    async function handleMarkerClick(marker){
       if (marker.state == "pin"){
         //show the location pop-up
-        closeMarkerPopup(activeMarker.current);
-        openMarkerPopup(marker);
+        await closeMarkerPopup(activeMarker.current);
+        await openMarkerPopup(marker);
         activeMarker.current = marker;
       } else {
         //close the location pop-up
-        closeMarkerPopup(marker);
+        await closeMarkerPopup(marker);
         activeMarker.current = null;
       }
     }
@@ -598,18 +601,21 @@ function Map({ mapId, trigger, setTrigger, deviceLocation, isLoggedIn }) {
      * @param {AdvancedMarkerElement} marker JS object rendered on Google Maps map
      * @returns true if successful, false otherwise
      */
-    function openMarkerPopup(marker){
+    async function openMarkerPopup(marker){
       if (marker == null) return false;
 
       try {
-          const locationData = DB.getLocation(marker.locationID);
-          const postData = DB.getPostsForLocation(marker.locationID);
+          const locationData = await DB.getLocation(marker.locationID);
+          const postData = await DB.getPostsForLocation(marker.locationID);
 
-          marker.content = LocationPopUp(locationData, postData, (locationID) => {
+          marker.content = LocationPopUp(
+            locationData, 
+            postData, 
+            (locationID) => {
             //on successful post creation, trigger a re-render
-            setTrigger(locationID);
-            mapInstance.panTo({lat: marker.position.lat + 0.003, lng: marker.position.lng})
-          }, isLoggedIn); //pass in isLoggedIn to the LocationPopUp function
+              setTrigger(locationID);
+              mapInstance.panTo({lat: marker.position.lat + 0.003, lng: marker.position.lng})
+          }, isLoggedIn, user?.uid); //pass in isLoggedIn and accountID to the LocationPopUp function
           marker.zIndex = 3;
           marker.state = "popup"
 
@@ -627,11 +633,11 @@ function Map({ mapId, trigger, setTrigger, deviceLocation, isLoggedIn }) {
      * @param {AdvancedMarkerElement} marker JS object rendered on Google Maps map
      * @returns true if successful, false otherwise
      */
-    function closeMarkerPopup(marker){
+    async function closeMarkerPopup(marker){
       if (marker == null) return false;
 
       try {
-        var postData = DB.getPostsForLocation(marker.locationID);
+        var postData = await DB.getPostsForLocation(marker.locationID);
 
         marker.content = new PinElement(getPinProps(postData));
         marker.zIndex = 1;
@@ -646,12 +652,7 @@ function Map({ mapId, trigger, setTrigger, deviceLocation, isLoggedIn }) {
     const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
 
     try {
-      let posts = [];
-
-      for (const locationPost of location.posts){
-        const retrievedPostData = DB.getPost(String(locationPost));
-        if (retrievedPostData != null) posts.push(retrievedPostData);
-      }
+      const posts = await DB.getPostsForLocation(location.locationID);
 
       //by default, render the pin (not selected state)
       const defaultPin = new PinElement(getPinProps(posts));
@@ -671,7 +672,7 @@ function Map({ mapId, trigger, setTrigger, deviceLocation, isLoggedIn }) {
       markersDict.current[location.locationID] = marker;
 
     } catch (e) {
-
+  
     }
   }
 
@@ -698,7 +699,8 @@ function Map({ mapId, trigger, setTrigger, deviceLocation, isLoggedIn }) {
  * @param {JSON} props { location, onSuccess }, location = location to make post for, onSuccess = callback function to re-render map with new post data
  * @returns form React component
  */
-function PostCreateForm({ location, onSuccess }){
+function PostCreateForm({ location, onSuccess, accountID }){
+  console.log('PostCreateForm received accountID:', accountID);
   const defaultRating = 2.5;
   const maxNotesLength = 150;
 
@@ -712,51 +714,40 @@ function PostCreateForm({ location, onSuccess }){
 
   //if this account already posted this location, edit the existing post instead of creating a new one
   useEffect(() => {
-    const post = DB.getPostByAccountAndLocation(accountID, location.locationID);
 
-    console.log(post);
+    (async () => {
+      const post = await DB.getPostByAccountAndLocation(accountID, location.locationID);
 
-    if (post != null) {
-      existingPostID.current = post.postID;
-      setCleanliness(post.cleanliness);
-      setAvailability(post.availability);
-      setAmenities(post.amenities);
-      setNotes(post.notes);
-      setSubmitText("Update Post");
-    }
-  }, [location]);
+      if (post != null) {
+        existingPostID.current = post.postID;
+        setCleanliness(post.cleanliness);
+        setAvailability(post.availability);
+        setAmenities(post.amenities);
+        setNotes(post.notes);
+        setSubmitText("Update Post");
+      }
+    })();
+  }, [location, accountID]);
 
-  function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault(); //do not reload the pag
-    
-    let postID = null;
+    console.log('Submitting post for accountID:', accountID); //Debug
 
     let timestamp = Date.now();
-
-    if (existingPostID.current != null){
-      postID = existingPostID.current;
-      DB.updatePost(
-        postID,
-        location.locationID,
-        accountID,
-        Math.round(cleanliness),
-        Math.round(availability),
-        Math.round(amenities),
-        notes,
-        timestamp
-      );
-    } else {
-      postID = DB.createPost(
-        location.locationID,
-        accountID,
-        Math.round(cleanliness),
-        Math.round(availability),
-        Math.round(amenities),
-        notes,
-        timestamp
-      );
-    }
     
+    try {
+      const postID = await DB.createPost (
+        location.locationID,
+        accountID,
+        Math.round(cleanliness),
+        Math.round(availability),
+        Math.round(amenities),
+        notes,
+        timestamp
+      );
+
+      console.log('Post created with postID:', postID); //Debug
+
     //trigger the map to re-render the pin
     onSuccess(location.locationID);
 
@@ -768,7 +759,16 @@ function PostCreateForm({ location, onSuccess }){
       "mediumseagreen",
       5000
     );
-  };
+  } catch (e) {
+    console.error('Error submitting post:', e);
+    openBanner(
+      "error-banner",
+      <p>Failed to submit post</p>,
+      "indianred",
+      5000
+    );
+  }
+};
 
   return (
     <form onSubmit={handleSubmit} className="create-form">
@@ -860,19 +860,23 @@ function LocationCreateForm({ onSuccess, deviceLocation, isLoggedIn }){
   const [enableSubmit, setEnableSubmit] = useState(false);
 
   useEffect(() => {
-    if (name == "" || gender == "" || location == null) return;
-    if (!isLoggedIn) return;
-
+    console.log('LocationCreateForm - Checking enableSubmit:', { name, gender, location, isLoggedIn });
+    
+    if (name == "" || gender == "" || location == null || !isLoggedIn) {
+      setEnableSubmit(false);
+      return;
+    }
+    
     setEnableSubmit(true);
-  }, [name, gender, location]);
+  }, [name, gender, location, isLoggedIn]);
 
-  function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault(); //do not reload the page
 
     const latitude = parseFloat(location.lat.toFixed(4)); //+-0.0001° is close enough
     const longitude = parseFloat(location.lng.toFixed(4));
 
-    let locationID = DB.createLocation(name, gender, latitude, longitude);
+    let locationID = await DB.createLocation(name, gender, latitude, longitude);
 
     //trigger the map to re-render the pin
     onSuccess(locationID);
@@ -999,7 +1003,7 @@ function AboutText(){
  * React component text showing account information and posts made by that account
  * @returns HTML text content
  */
-function AccountPage(){
+function AccountPage({accountID}){
   //placeholder information
   const [account, setAccount] = useState({
     accountID: 0,
@@ -1011,41 +1015,45 @@ function AccountPage(){
   const [posts, setPosts] = useState([])
 
   useEffect(() => {
-    const a = DB.getAccount(accountID);
-    if (a != null) setAccount(a);
-  }, []);
+    (async () => {
+      const a = await DB.getAccount(accountID);
+      if (a != null) setAccount(a);
+    })();
+  }, [accountID]);
 
   useEffect(() => {
-    const ps = [];
+    (async () => {
+      const ps = [];
 
     //try to load all posts
-    for (const postID of account.posts){
-      var p = DB.getPost(postID);
-      if (p != null){
-        //try to load location info to get location name of that post
-        const rating = Math.floor((p.cleanliness + p.availability + p.amenities) / 3);
-        const l = DB.getLocation(p.locationID);
-        if (l != null){
-          p.locationTitle = l.title;
-          p.rating = rating;
-          ps.push(p);
+      for (const postID of account.posts){
+        var p = await DB.getPost(postID);
+        if (p != null){
+          //try to load location info to get location name of that post
+          const rating = Math.floor((p.cleanliness + p.availability + p.amenities) / 3);
+          const l = await DB.getLocation(p.locationID);
+          if (l != null){
+            p.locationTitle = l.title;
+            p.rating = rating;
+            ps.push(p);
+          }
         }
       }
-    }
-    setPosts(ps);
+      setPosts(ps);
+    })();
   }, [account]);
 
   return <>
     <div className="account-page">
       <div className="account-page-header">
-        <h2>{account.username}</h2>
+        <h2>{account.displayName}</h2>
         <h3>{posts.length} posts</h3>
       </div>
 
       <div className="account-page-list">
         {
           posts.map((post, index) => (
-            <div className="account-page-item">
+            <div className="account-page-item" key={index}>
               <h4>{post.locationTitle}</h4>
               <StarRating rating={post.rating} />
               {(post.notes.length < 1)? <p className="no-notes">No notes</p> : <p>{post.notes}</p> }
@@ -1071,6 +1079,15 @@ export default function App() {
   const { user, loading } = useAuthState();
   //convert user to boolean- true if logged in, false if not
   const isLoggedIn = !!user;
+
+  useEffect(() => {
+    console.log('isLoggedIn changed:', isLoggedIn, 'user:', user);
+    if (isLoggedIn) {
+      console.log('✅ User is now authenticated! isLoggedIn = true.');
+    } else {
+      console.log('❌ User is not authenticated. isLoggedIn = false.');
+    }
+  }, [isLoggedIn, user]);
 
   const handleGoogleLogin = async () => {
     try
@@ -1130,7 +1147,7 @@ export default function App() {
   }
 
   //asynchronously trigger so it runs after the App renders
-  useEffect( () => {
+   useEffect( () => {
     //only show banner if not loading and not logged in
     if (!loading && !isLoggedIn){
       openBanner(
@@ -1141,8 +1158,12 @@ export default function App() {
         }}>Login</span> to create posts.</p>,
         "indianred"
       );
+    
+    } else if (!loading && isLoggedIn) {
+      // Close the banner when user logs in
+      closeBanner("login-banner", true);
     }
-  }, [loading, isLoggedIn]); //Dependency array to re-run effect when loading or isLoggedIn changes
+  }, [loading, isLoggedIn]);
 
   function pingLocation() {
     if (!navigator.geolocation) {
@@ -1250,7 +1271,7 @@ export default function App() {
               5000
             );
           } else {
-            openModal(<AccountPage />);
+            openModal(<AccountPage accountID={user?.uid} />);
           }
         }} content={
           <img src={userIcon} alt="User icon" />
@@ -1268,7 +1289,7 @@ export default function App() {
         libraries={GOOGLE_LIBRARIES}
         mapIds={[privateMapID]}
       >
-        <Map mapId={privateMapID} trigger={trigger} setTrigger={setTrigger} deviceLocation={deviceLocation} isLoggedIn={isLoggedIn} />
+        <Map mapId={privateMapID} trigger={trigger} setTrigger={setTrigger} deviceLocation={deviceLocation} isLoggedIn={isLoggedIn} user={user} />
       </LoadScriptNext>
     </div>
   </>;

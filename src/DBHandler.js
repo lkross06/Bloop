@@ -1,21 +1,10 @@
-// DBHandler.js
-import locationData from "./data/location.json";
-import postData from "./data/post.json";
-import accountData from "./data/account.json";
-
-import { sha256 } from 'js-sha256';
-
 class DBHandler {
 
   constructor(){
-    this.locations = locationData;
-    this.posts = postData;
-    this.accounts = accountData;
-  }
-
-  static #generateUniqueID(){
-    // return sha256(String(Date.now())); //creates a 256-bit hash using the current time in ms. so this is a one-time, deterministic UID
-    return Date.now();
+    this.baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+    this.locations = {}
+    this.posts = {};
+    this.accounts = {};
   }
 
   /** ------- LOCATION DATA ------ */
@@ -24,8 +13,24 @@ class DBHandler {
    * Get all locations from database
    * @returns list of JSONs representing all locations
    */
-  getLocationsAll(){
-    return Object.values(this.locations);
+  async getLocationsAll(){
+    try {
+      const response = await fetch(`${this.baseURL}/locations/`);
+      if (!response.ok) throw new Error("Failed to fetch locations");
+      const data = await response.json();
+
+      Object.keys(data).forEach(key => {
+        if (!data[key].locationID) {
+          data[key].locationID = key;
+        }
+      });
+
+      this.locations = data;
+      return Object.values(data);
+    } catch (e) {
+      console.error('Error fetching locations:', e);
+      return null;
+    }
   }
 
   /**
@@ -33,8 +38,22 @@ class DBHandler {
    * @param {*} locationID unique identifier for this location
    * @returns JSON representing location with same locationID, null if not found
    */
-  getLocation(locationID) {
-    return this.locations[String(locationID)] || null;
+  async getLocation(locationID) {
+    try {
+      const response = await fetch(`${this.baseURL}/locations/${locationID}`);
+      if (!response.ok) throw new Error("Failed to fetch location");
+      const data = await response.json();
+
+      if (!data.locationID) {
+        data.locationID = locationID;
+      }
+
+      this.locations[locationID] = data;
+      return data;
+    } catch (e) {
+      console.error('Error fetching location:', e);
+      return this.locations[String(locationID)] || null; 
+    }
   }
 
   /**
@@ -45,31 +64,31 @@ class DBHandler {
    * @param {*} lng longitude coords
    * @returns locationID if successful, null otherwise
    */
-  createLocation(title, gender, lat, lng){
+  async createLocation(title, gender, lat, lng){
     try {
-      const id = DBHandler.#generateUniqueID();
+      const response = await fetch(`${this.baseURL}/locations/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({title, gender, lat, lng})
+      });
 
-      if (gender == "male"){
-        gender = "M"
-      } else if (gender == "female"){
-        gender = "F"
-      } else {
-        gender = "N"
-      }
+      if (!response.ok) throw new Error("Failed to create location");
 
-      let location = {
-        locationID: id,
-        title: title,
-        lat: Number(lat),
-        lng: Number(lng),
-        posts: [],
-        gender: gender
-      }
-
-      this.locations[id] = location;
+      const {id} = await response.json();
+      
+      this.locations[id] = {
+        title, 
+        lat, 
+        lng, 
+        posts: [], 
+        gender: gender ==="male" ? "M" : gender ==="female" ? "F" : "N"
+      };
 
       return id;
     } catch (e) {
+      console.error('Error creating location:', e);
       return null;
     }
   }
@@ -81,8 +100,17 @@ class DBHandler {
    * @param {*} postID unique identifier for this post
    * @returns JSON representing post with same postID, null if not found
    */
-  getPost(postID) {
-    return this.posts[String(postID)] || null;
+  async getPost(postID) {
+    try {
+      const response = await fetch(`${this.baseURL}/reviews/${postID}`);
+      if (!response.ok) throw new Error("Failed to fetch post");
+      const data = await response.json();
+      this.posts[postID] = data;
+      return data;
+    } catch (e) {
+      console.error('Error fetching post:', e);
+      return this.posts[String(postID)] || null; 
+    }
   }
 
   /**
@@ -91,46 +119,60 @@ class DBHandler {
    * @param {*} locationID unique identifier for location this post is about
    * @returns JSON representing post with same accountID/locationID, null if not found
    */
-  getPostByAccountAndLocation(accountID, locationID) {
+  async getPostByAccountAndLocation(accountID, locationID) {
     try {
-      const a = this.getAccount(accountID);
-      const l = this.getLocation(locationID);
-
-      const a_posts = new Set(a.posts);
-      for (const l_post of l.posts){
-        if (a_posts.has(l_post)){
-          //we found our post
-          return this.getPost(l_post);
-        }
+      const response = await fetch(`${this.baseURL}/reviews/users/${accountID}/locations/${locationID}`);
+      
+      if (response.status === 404) {
+        return null;
       }
 
-      return null;
+      if (!response.ok) throw new Error("Failed to fetch post");
+
+      const data = await response.json();
+      this.posts[data.reviewID] = data;
+      return data;
     } catch (e) {
-      return null;
+      console.error('Error fetching post by account and location:', e);
+      return null; 
     }
   }
 
-  getPostsForLocation(locationID) {
-    const location = this.getLocation(locationID);
+  async getPostsForLocation(locationID) {
+    try {
+      const response = await fetch(`${this.baseURL}/reviews/locations/${locationID}`);
+      
+      if (!response.ok) return []
+      
+      const data = await response.json();
 
-    if (location == null){ return null; }
-
-    var posts = []
-
-    for (const postID of location.posts){
-      var post = this.getPost(postID);
-      if (post != null) { posts.push(post); }
-    }
+      const posts = Object.entries(data).map(([id, post]) => ({ postID:id, ...post }));
+      posts.forEach(post => {
+        this.posts[post.postID] = post;
+      });
 
     return posts;
+    } catch (e) {
+      console.error('Error fetching posts for location:', e);
+      return [];  
+    }
   }
 
-  createPost(locationID, accountID, cleanliness, availability, amenities, notes, timestamp){
+  async createPost(locationID, accountID, cleanliness, availability, amenities, notes, timestamp){
     try {
-      //generate a new unique ID
-      const id = DBHandler.#generateUniqueID();
+      const response = await fetch(`${this.baseURL}/reviews/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({locationID, accountID, cleanliness, availability, amenities, notes, timestamp})
+      });
 
-      let newPost = {
+      if (!response.ok) throw new Error("Failed to create post");
+
+      const {id} = await response.json();
+
+      this.posts[id] = {
         postID: id,
         locationID: locationID,
         accountID: accountID,
@@ -141,25 +183,25 @@ class DBHandler {
         timestamp: timestamp
       };
     
-      //try to make sure the account/location exist first, so that the try/catch will catch bad values
-      let a = this.accounts[accountID];
-      let l = this.locations[locationID];
-      if (a == null || l == null) throw new Error;
-
-      //all values are valid! now we can actually write values
-      a.posts.push(id);
-      l.posts.push(id);
-
-      this.posts[id] = newPost;
-
       return id;
     } catch (e) {
+      console.error('Error creating post:', e);
       return null;
     }
   }
 
-  updatePost(postID, locationID, accountID, cleanliness, availability, amenities, notes, timestamp){
+  async updatePost(postID, locationID, accountID, cleanliness, availability, amenities, notes, timestamp){
     try {
+      const response = await fetch(`${this.baseURL}/reviews/${postID}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({locationID, accountID, cleanliness, availability, amenities, notes, timestamp})
+      });
+
+      if (!response.ok) throw new Error("Failed to update post");
+      
       this.posts[postID] = {
         postID: postID,
         locationID: locationID,
@@ -173,6 +215,7 @@ class DBHandler {
 
       return true;
     } catch (e) {
+      console.error('Error updating post:', e);
       return false;
     }
   }
@@ -184,8 +227,17 @@ class DBHandler {
    * @param {*} accountID unique identifier for this account
    * @returns JSON representing account with same accountID, null if not found
    */
-  getAccount(accountID) {
-    return this.accounts[String(accountID)] || null;
+  async getAccount(accountID) {
+    try {
+      const response = await fetch(`${this.baseURL}/users/${accountID}`);
+      if (!response.ok) throw new Error("Failed to fetch account");
+      const data = await response.json();
+      this.accounts[accountID] = data;
+      return data;
+    } catch (e) {
+      console.error('Error fetching account:', e);
+      return null;
+    }
   }
 
   /** -------- TESTING --------- */
