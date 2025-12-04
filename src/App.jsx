@@ -859,6 +859,11 @@ function LocationCreateForm({ onSuccess, deviceLocation, isLoggedIn }){
 
   const [enableSubmit, setEnableSubmit] = useState(false);
 
+  // Debug: log when isLoggedIn changes
+  useEffect(() => {
+    console.log('LocationCreateForm - isLoggedIn:', isLoggedIn);
+  }, [isLoggedIn]);
+
   useEffect(() => {
     console.log('LocationCreateForm - Checking enableSubmit:', { name, gender, location, isLoggedIn });
     
@@ -1078,7 +1083,18 @@ export default function App() {
   // keeps track of whether the user is actually logged in or not 
   const { user, loading } = useAuthState();
   //convert user to boolean- true if logged in, false if not
-  const isLoggedIn = !!user;
+ const isLoggedIn = !!user;
+ // const isLoggedIn = true; //TEMP: REMOVE AFTER TESTING
+
+    // Add this useEffect to track when isLoggedIn changes
+  useEffect(() => {
+    console.log('isLoggedIn changed:', isLoggedIn, 'user:', user);
+    if (isLoggedIn) {
+      console.log('✅ User is now authenticated! isLoggedIn = true.');
+    } else {
+      console.log('❌ User is not authenticated. isLoggedIn = false.');
+    }
+  }, [isLoggedIn, user]);
 
   useEffect(() => {
     console.log('isLoggedIn changed:', isLoggedIn, 'user:', user);
