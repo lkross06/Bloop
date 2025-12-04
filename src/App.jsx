@@ -1161,6 +1161,10 @@ export default function App() {
         }}>Login</span> to create posts.</p>,
         "indianred"
       );
+    
+    } else if (!loading && isLoggedIn) {
+      // Close the banner when user logs in
+      closeBanner("login-banner", true);
     }
   }, [loading, isLoggedIn]); //Dependency array to re-run effect when loading or isLoggedIn changes
 
