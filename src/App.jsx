@@ -475,7 +475,7 @@ function Map({ mapId, trigger, setTrigger, deviceLocation, isLoggedIn }) {
     for (const location of DB.getLocationsAll()) {
       addMarker(location);
     }
-  }, [mapInstance]);
+  }, [mapInstance, isLoggedIn]);
 
   //when the trigger tells us to update one of the location markers
   useEffect(() => {
@@ -859,12 +859,21 @@ function LocationCreateForm({ onSuccess, deviceLocation, isLoggedIn }){
 
   const [enableSubmit, setEnableSubmit] = useState(false);
 
+  // Debug: log when isLoggedIn changes
   useEffect(() => {
-    if (name == "" || gender == "" || location == null) return;
-    if (!isLoggedIn) return;
+    console.log('LocationCreateForm - isLoggedIn:', isLoggedIn);
+  }, [isLoggedIn]);
 
+  useEffect(() => {
+    console.log('LocationCreateForm - Checking enableSubmit:', { name, gender, location, isLoggedIn });
+    
+    if (name == "" || gender == "" || location == null || !isLoggedIn) {
+      setEnableSubmit(false);
+      return;
+    }
+    
     setEnableSubmit(true);
-  }, [name, gender, location]);
+  }, [name, gender, location, isLoggedIn]);
 
   function handleSubmit(e) {
     e.preventDefault(); //do not reload the page
@@ -1070,7 +1079,18 @@ export default function App() {
   // keeps track of whether the user is actually logged in or not 
   const { user, loading } = useAuthState();
   //convert user to boolean- true if logged in, false if not
-  const isLoggedIn = !!user;
+ const isLoggedIn = !!user;
+ // const isLoggedIn = true; //TEMP: REMOVE AFTER TESTING
+
+    // Add this useEffect to track when isLoggedIn changes
+  useEffect(() => {
+    console.log('isLoggedIn changed:', isLoggedIn, 'user:', user);
+    if (isLoggedIn) {
+      console.log('✅ User is now authenticated! isLoggedIn = true.');
+    } else {
+      console.log('❌ User is not authenticated. isLoggedIn = false.');
+    }
+  }, [isLoggedIn, user]);
 
   const handleGoogleLogin = async () => {
     try
