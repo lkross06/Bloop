@@ -27,11 +27,14 @@ export async function ensureUserDoc(user){
     if (!userDoc.exists()){
         console.log("No such user/document exists! Creating new user doc.");
 
+        //Extract displayName from email if it's not provided
+        const displayName = user.email?.split('@')[0] || null;
+
         //Add new doc in collection "users"
         await setDoc(userRef, {
             uid: user.uid,
             email: user.email || null,
-            displayName: user.displayName || null,
+            displayName: displayName,
             photoURL: user.photoURL || null,
             createdAt: new Date().toISOString(),
         });
