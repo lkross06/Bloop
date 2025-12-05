@@ -1086,16 +1086,7 @@ export default function App() {
  const isLoggedIn = !!user;
  // const isLoggedIn = true; //TEMP: REMOVE AFTER TESTING
 
-    // Add this useEffect to track when isLoggedIn changes
-  useEffect(() => {
-    console.log('isLoggedIn changed:', isLoggedIn, 'user:', user);
-    if (isLoggedIn) {
-      console.log('✅ User is now authenticated! isLoggedIn = true.');
-    } else {
-      console.log('❌ User is not authenticated. isLoggedIn = false.');
-    }
-  }, [isLoggedIn, user]);
-
+  // Add this useEffect to track when isLoggedIn changes
   useEffect(() => {
     console.log('isLoggedIn changed:', isLoggedIn, 'user:', user);
     if (isLoggedIn) {
@@ -1224,6 +1215,7 @@ export default function App() {
    * Hides all default location pop-ups in Google Maps
    * https://stackoverflow.com/questions/7950030/can-i-remove-just-the-popup-bubbles-of-pois-in-google-maps-api-v3
    */
+  useEffect(() => {
   function hideInfoWindow() {
     if (!window.google || !google.maps || !google.maps.InfoWindow) {
       setTimeout(hideInfoWindow, 10); //try 10ms later until Google API loads
@@ -1236,10 +1228,11 @@ export default function App() {
       if (key === 'map' && ! this.get('noSuppress')) return;
       
       set.apply(this, arguments); //disable pop-ups whenever you select a known POI
-    }
+    };
   }
-
+  
   hideInfoWindow();
+  }, []);
 
   //handle plus button click
   const handlePlusClick = () => {
