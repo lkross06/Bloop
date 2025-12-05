@@ -252,6 +252,10 @@ body {
   margin: 1rem 0 1.5rem 0;
 }
 
+.reviews-page-link:hover {
+  text-decoration: underline;
+}
+
 /* ratings summary section */
 .location-popup-attributes {
   grid-row: 2 / 3;
@@ -478,7 +482,7 @@ body {
   margin-top: 1.5rem;
 
   max-height: 60vh;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .account-page-item {
