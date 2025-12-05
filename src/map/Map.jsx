@@ -24,7 +24,65 @@ const containerStyle = {
     height: "100%",
   };
 
+/**
+ * React component text showing posts made on a location
+ * @returns HTML text content
+ */
+function ReviewsPage({locationID, DB}){
+  //placeholder information
+  const [location, setLocation] = useState({
+    posts: []
+  });
 
+  const [posts, setPosts] = useState([])
+
+  useEffect(() => {
+    (async () => {
+      const l = await DB.getLocation(locationID);
+      if (l != null) setLocation(l);
+    })();
+  }, [locationID]);
+
+  useEffect(() => {
+    (async () => {
+      const ps = [];
+
+      if (!Array.isArray(location.posts)) return;
+
+    //try to load all posts
+      for (const postID of location.posts){
+        var p = await DB.getPost(postID);
+        if (p != null){
+          //try to load location info to get location name of that post
+          const rating = Math.floor((p.cleanliness + p.availability + p.amenities) / 3);
+          const a = await DB.getAccount(p.accountID);
+          if (a != null){
+            p.accountUsername = a.displayName;
+            p.rating = rating;
+            ps.push(p);
+          }
+        }
+      }
+      setPosts(ps);
+    })();
+  }, [location]);
+
+  return <>
+    <div className="account-page">
+      <div className="account-page-list">
+        {
+          posts.map((post, index) => (
+            <div className="account-page-item" key={index}>
+              <h4>{post.accountUsername}</h4>
+              <StarRating rating={post.rating} />
+              {(post.notes.length < 1)? <p className="no-notes">No notes</p> : <p>{post.notes}</p> }
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </>
+}
 
 /**
  * React component form for creating a new Post
@@ -302,7 +360,9 @@ function getPinProps(locationPosts){
           <h4>{(total_posts != 0)? locationRating : "--"}</h4>
           <h4><StarRating rating={locationRating} /></h4>
   
-          <p>{total_posts} {(total_posts == 1)? "review" : "reviews"}</p>
+          <p>{total_posts} <a className="reviews-page-link" onClick={ () => {
+            openModal(<ReviewsPage locationID={location.locationID} DB={DB} />);
+          }}>{(total_posts == 1)? "review" : "reviews"}</a></p>
         </span>
   
         {
