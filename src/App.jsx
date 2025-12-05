@@ -4,6 +4,9 @@ import ReactDOM from "react-dom/client";
 // open and close banner functions
 import { openBanner, closeBanner } from "./ui/banner.jsx";
 
+// open and close modal functions
+import { openModal, closeModal } from "./ui/modal.jsx";
+
 import { GoogleMap, LoadScriptNext } from "@react-google-maps/api";
 const GOOGLE_LIBRARIES = ["marker"];
 
@@ -151,45 +154,6 @@ function GenderSymbol({ gender }){
   if (gender == "f" || gender == "F") return <span className="female">{female}</span>
 
   return <span className="non-binary">{all}</span>
-}
-
-
-/**
- * Attempts to remove a currently active modal, closing any other modals in the process (only one active at a time)
- * @returns true if successful and there was a modal to close, false otherwise
- */
-function closeModal(){
-  try{
-    let modal = document.getElementById("modal");
-    modal.remove();
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Renders a new modal that closes onclick outside of modal body
- * @param {*} modalContent JSX HTML content for modal body
- */
-function openModal(modalContent){
-
-  closeModal();
-
-  //make the span the first child in <body>
-  var span = document.createElement("span");
-  span.setAttribute("id", "modal");
-  document.body.insertBefore(span, document.body.firstChild);
-
-  ReactDOM.createRoot(span).render(
-    <>
-    <div onClick={(event) => { event.target.remove(); }} id="modal-container">
-      <div onClick={(event) => { event.stopPropagation(); /* do nothing onClick */ }} id="modal-body"> 
-        {modalContent}
-      </div>
-    </div>
-    </>
-  );
 }
 
 /**
