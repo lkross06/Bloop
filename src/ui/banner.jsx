@@ -58,6 +58,7 @@ export function openBanner(id, content, backgroundColor, lifetime = -1){
   
     //asynchronously start the open slide animation
     setTimeout(() => {
+      if (banner.firstChild == null) return;
       banner.firstChild.classList.add("open");
     }, 0);
   

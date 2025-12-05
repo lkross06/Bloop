@@ -229,6 +229,8 @@ function AccountPage({accountID}){
     (async () => {
       const ps = [];
 
+      if (!Array.isArray(account.posts)) return;
+
     //try to load all posts
       for (const postID of account.posts){
         var p = await DB.getPost(postID);
