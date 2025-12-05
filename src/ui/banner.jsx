@@ -68,4 +68,15 @@ export function openBanner(id, content, backgroundColor, lifetime = -1){
       }, lifetime);
     }
 }
-  
+
+/**
+ * Opens the login banner
+ * @param {function} onClick callback when login button is clicked
+ */
+export function openLoginBanner(onClick){
+  openBanner(
+    "login-banner",
+    <p>Currently this page is read-only. <span className="login-button" onClick={onClick}>Login</span> to create posts.</p>,
+    "indianred"
+  );
+}

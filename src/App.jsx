@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 
 // open and close banner functions
-import { openBanner, closeBanner } from "./ui/banner.jsx";
+import { openBanner, closeBanner, openLoginBanner } from "./ui/banner.jsx";
 
 // open and close modal functions
 import { openModal, closeModal } from "./ui/modal.jsx";
@@ -282,8 +282,13 @@ export default function App() {
   // keeps track of whether the user is actually logged in or not 
   const { user, loading } = useAuthState();
   //convert user to boolean- true if logged in, false if not
- const isLoggedIn = !!user;
- // const isLoggedIn = true; //TEMP: REMOVE AFTER TESTING
+  const isLoggedIn = !!user;
+
+  const openLoginModal = () => {
+    closeBanner("login-banner"); //closes the banner
+    setIsLoginOpen(true); //show the popup
+  }
+
 
   // Add this useEffect to track when isLoggedIn changes
   useEffect(() => {
@@ -330,6 +335,11 @@ export default function App() {
         "mediumseagreen",
         5000
       );
+
+      //call after Logout successful closes
+      setTimeout(() => {
+        openLoginBanner(openLoginModal);
+      }, 5000);
     }
     catch(err){
       console.error("Logout fauled", err);
@@ -360,15 +370,7 @@ export default function App() {
    useEffect( () => {
     //only show banner if not loading and not logged in
     if (!loading && !isLoggedIn){
-      openBanner(
-        "login-banner",
-        <p>Currently this page is read-only. <span className="login-button" onClick={() => {
-          closeBanner("login-banner"); // closes the banner
-          setIsLoginOpen(true); // shows the popup
-        }}>Login</span> to create posts.</p>,
-        "indianred"
-      );
-    
+      openLoginBanner(openLoginModal);
     } else if (!loading && isLoggedIn) {
       // Close the banner when user logs in
       closeBanner("login-banner", true);
@@ -456,7 +458,10 @@ export default function App() {
     {/* Login popup controlled by isLoginOpen */}
     <LoginModal 
       isOpen={isLoginOpen}
-      onClose={() => setIsLoginOpen(false)}
+      onClose={() => {
+        setIsLoginOpen(false);
+        openLoginBanner(openLoginModal);
+      }}
       onGoogleLogin={handleGoogleLogin}
       onEmailSignUp={handleEmailSignUp}
     />
