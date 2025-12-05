@@ -12,6 +12,10 @@ Configure environment ``.env`` file with JavaScript Google Maps API private key 
 ```
 VITE_GOOGLE_MAPS_KEY=INSERT-KEY-HERE
 VITE_GOOGLE_MAPS_ID=INSERT-MAP-ID-HERE
+VITE_API_URL=http://localhost:3000/api
+FIREBASE_PROJECT_ID=INSERT-PROJECT-ID-HERE
+FIREBASE_CLIENT_EMAIL=INSERT-CLIENT-EMAIL-HERE
+FIREBASE_PRIVATE_KEY=INSERT-PRIVATE-KEY-HERE
 ```
 
 ## Start Server
@@ -19,6 +23,7 @@ VITE_GOOGLE_MAPS_ID=INSERT-MAP-ID-HERE
 Run ``npm run dev`` to concurrently start Vite front-end server and Express.js back-end server.
 
 App will be live at http://localhost:5173/
+Backend will run at http://localhost:3000/api
 
 Close the app with CTRL+C in terminal.
 
