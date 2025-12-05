@@ -1,4 +1,5 @@
 import express from "express";
+import { verifyToken } from "../middleware/auth.js";
 import {
   getAllLocations,
   getLocationById,
@@ -9,6 +10,7 @@ const router = express.Router();
 
 router.get("/", getAllLocations);
 router.get("/:locationID", getLocationById);
-router.post("/", createLocation);
+//Protected
+router.post("/", verifyToken, createLocation);
 
 export default router;

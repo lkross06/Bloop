@@ -7,6 +7,10 @@ class DBHandler {
     this.accounts = {};
   }
 
+  setUser(user){
+    this.user = user;
+  }
+
   /** ------- LOCATION DATA ------ */
 
   /**
@@ -66,11 +70,20 @@ class DBHandler {
    */
   async createLocation(title, gender, lat, lng){
     try {
+      //Get firebase ID token from authenticated user
+      const token = this.user ? await this.user.getIdToken() : null;
+
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token){
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${this.baseURL}/locations/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: headers,
         body: JSON.stringify({title, gender, lat, lng})
       });
 
@@ -160,11 +173,20 @@ class DBHandler {
 
   async createPost(locationID, accountID, cleanliness, availability, amenities, notes, timestamp){
     try {
+      //Get firebase ID token from authenticated user
+      const token = this.user ? await this.user.getIdToken() : null;
+
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token){
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`${this.baseURL}/reviews/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: headers,
         body: JSON.stringify({locationID, accountID, cleanliness, availability, amenities, notes, timestamp})
       });
 

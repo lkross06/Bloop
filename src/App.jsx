@@ -1105,6 +1105,10 @@ export default function App() {
     }
   }, [isLoggedIn, user]);
 
+  useEffect(() => {
+    DB.setUser(user);
+  }, [user]);
+
   const handleGoogleLogin = async () => {
     try
     {
