@@ -4,7 +4,7 @@ import { GoogleMap } from "@react-google-maps/api";
 const mapStartCoords = {lat: 34.0699, lng: -118.4438}
 
 const minimumZoomSmall = 11.5;
-const maximumZoomSmall = 16.9; //at 17, more labels are shown that would overcrowd the space
+const maximumZoomSmall = 19;
 const defaultZoomSmall = 14;
 
 const containerStyleSmall = {

@@ -16,7 +16,7 @@ import { StarRating, GenderSymbol } from "../ui/ratingAndGender.jsx";
 const mapStartCoords = {lat: 34.0699, lng: -118.4438}
 
 const minimumZoom = 11.5; //how far you can zoom out
-const maximumZoom = 16.5; //how far you can zoom in
+const maximumZoom = 19; //how far you can zoom in
 const defaultZoom = 15.5;
 
 const containerStyle = {
