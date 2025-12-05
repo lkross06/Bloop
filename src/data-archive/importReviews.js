@@ -1,4 +1,4 @@
-import { db } from "./admin.js";
+import { db } from "../admin.js";
 import fs from "fs";
 
 // Load JSON
