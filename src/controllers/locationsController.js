@@ -55,8 +55,8 @@ export const createLocation = async (req, res) => {
   try {
     let { title, gender, lat, lng} = req.body;
 
-    if (gender === "male") gender = "M";
-    else if (gender === "female") gender = "F";
+    if (gender === "m" || gender === "M" || gender === "male" || gender === "Male") gender = "M";
+    else if (gender === "f" || gender === "F" || gender === "female" || gender === "Female") gender = "F";
     else gender = "N";     
 
     const newDoc = await db.collection("locations").add({
