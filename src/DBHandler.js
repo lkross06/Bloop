@@ -115,7 +115,11 @@ class DBHandler {
    */
   async getPost(postID) {
     try {
-      const response = await fetch(`${this.baseURL}/reviews/${postID}`);
+      const response = await fetch(`${this.baseURL}/reviews/id/${postID}`);
+      
+      if (response.status === 404) {
+        return null;
+      }
       if (!response.ok) throw new Error("Failed to fetch post");
       const data = await response.json();
       this.posts[postID] = data;
@@ -214,7 +218,7 @@ class DBHandler {
 
   async updatePost(postID, locationID, accountID, cleanliness, availability, amenities, notes, timestamp){
     try {
-      const response = await fetch(`${this.baseURL}/reviews/${postID}`, {
+      const response = await fetch(`${this.baseURL}/reviews/id/${postID}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

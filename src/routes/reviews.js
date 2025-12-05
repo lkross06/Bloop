@@ -13,8 +13,8 @@ const router = express.Router();
 router.get("/users/:accountID/locations/:locationID", getReviewByAccountAndLocation);
 router.get("/users/:accountID", getReviewsByAccount);
 router.get("/locations/:locationID", getReviewsByLocation);
-router.get("/:reviewID", getReviewById);
+router.get("/id/:reviewID", getReviewById);
 router.post("/", createReview);
-router.put("/:reviewID", updateReview);
+router.put("/id/:reviewID", updateReview);
 
 export default router;
