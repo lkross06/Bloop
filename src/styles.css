@@ -478,7 +478,7 @@ body {
   margin-top: 1.5rem;
 
   max-height: 60vh;
-  overflow-y: auto;
+  overflow-y: scroll;
 }
 
 .account-page-item {
@@ -536,8 +536,8 @@ body {
 }
 .logout-button{
   position: fixed;
-  top:16px;
-  right: 16px;
+  top: 4rem;
+  right: 1.5rem;
   z-index: 2000;
   
   background: indianred;
@@ -548,7 +548,7 @@ body {
   font-weight: 700;
   font-family: system-ui, sans-serif;
 
-  padding: 8px 10px;
+  padding: 0.5rem 1rem;
   border-radius: 10px;
   cursor: pointer;
 }

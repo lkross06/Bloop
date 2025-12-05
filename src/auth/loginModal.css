@@ -22,7 +22,7 @@
     width: 100%;
     padding: 10px;
     margin-top: 10px;
-    background: #4285F4;
+    background: #6a5acd;
     color: white;
     border: none; 
     border-radius: 5px;
@@ -64,5 +64,5 @@
   
   .modal-content form input:focus {
     outline: none;
-    border-color: #4285F4;
+    border-color: #6a5acd;
   }
