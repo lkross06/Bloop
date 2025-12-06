@@ -31,3 +31,6 @@ Close the app with CTRL+C in terminal.
 If changes are made to Vite front-end (``/src/*``), the
 app will update automatically. If changes are made to express back-end (``/server.js``, ``/vite.config.js``),
 you will need to restart the server.
+
+## Modelling
+![Modelling Image](src/assets/modelling.jpeg)
