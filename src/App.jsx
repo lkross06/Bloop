@@ -381,7 +381,7 @@ export default function App() {
 
   /**
    * asynchronously pings the device's GPS module with Navigator API, sets deviceLocation in <App/> React state
-   * @returns true if successful, false otherwise
+   * @returns true if Navigator API is available, false otherwise
    */
   function pingLocation() {
     if (!navigator.geolocation) return false;
@@ -404,7 +404,7 @@ export default function App() {
 
     const settings = {
       enableHighAccuracy: true,
-      timeout: 5000 //try to poll API for 5s at a time
+      timeout: 5000 //ms, try to poll API for 5s at a time
     };
 
     navigator.geolocation.getCurrentPosition(onSuccess, onFailure, settings);
