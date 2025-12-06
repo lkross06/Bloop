@@ -379,11 +379,12 @@ export default function App() {
     }
   }, [loading, isLoggedIn]);
 
+  /**
+   * asynchronously pings the device's GPS module with Navigator API, sets deviceLocation in <App/> React state
+   * @returns true if successful, false otherwise
+   */
   function pingLocation() {
-    if (!navigator.geolocation) {
-      console.warn("Geolocation is not supported");
-      return;
-    }
+    if (!navigator.geolocation) return false;
 
     /**
      * DESIGN DECISION
@@ -392,21 +393,26 @@ export default function App() {
      * and watchPosition consume much more battery staying constantly active than sending an asynchronous
      * ping every n seconds.
      */
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setDeviceLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        })
-      },
-      (err) => {},
-      {
-        enableHighAccuracy: true,
-        timeout: 5000 //try to poll API for 5s at a time
-    });
+    const onSuccess = (position) => {
+      setDeviceLocation({
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      })
+    };
+
+    const onFailure = (err) => {};
+
+    const settings = {
+      enableHighAccuracy: true,
+      timeout: 5000 //try to poll API for 5s at a time
+    };
+
+    navigator.geolocation.getCurrentPosition(onSuccess, onFailure, settings);
 
     //ping GPS module again after timeout
     setTimeout(pingLocation, geolocationPingTimeout * 1000);
+
+    return true;
   };
 
   //TRY TO FIND THEIR LOCATION AS QUICKLY AS POSSIBLE WHEN THE USER FIRST INTERACTS WITH THE PAGE
